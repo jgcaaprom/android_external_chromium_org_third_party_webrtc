@@ -40,7 +40,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/voice_engine/voe_call_report_impl.cc \
 	third_party/webrtc/voice_engine/voe_codec_impl.cc \
 	third_party/webrtc/voice_engine/voe_dtmf_impl.cc \
-	third_party/webrtc/voice_engine/voe_encryption_impl.cc \
 	third_party/webrtc/voice_engine/voe_external_media_impl.cc \
 	third_party/webrtc/voice_engine/voe_file_impl.cc \
 	third_party/webrtc/voice_engine/voe_hardware_impl.cc \

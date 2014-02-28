@@ -28,6 +28,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/rtp_rtcp/source/receive_statistics_impl.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_header_parser.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_rtcp_impl.cc \
+	third_party/webrtc/modules/rtp_rtcp/source/rtcp_packet.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtcp_receiver.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtcp_receiver_help.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtcp_sender.cc \

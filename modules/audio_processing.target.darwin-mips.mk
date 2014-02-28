@@ -49,7 +49,9 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_processing/voice_detection_impl.cc \
 	third_party/webrtc/modules/audio_processing/ns/noise_suppression.c \
 	third_party/webrtc/modules/audio_processing/ns/ns_core.c \
-	third_party/webrtc/modules/audio_processing/aecm/aecm_core_mips.c
+	third_party/webrtc/modules/audio_processing/aecm/aecm_core_mips.c \
+	third_party/webrtc/modules/audio_processing/aec/aec_core_mips.c \
+	third_party/webrtc/modules/audio_processing/aec/aec_rdft_mips.c
 
 
 # Flags passed to both C and C++ files.

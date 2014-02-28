@@ -24,6 +24,7 @@ GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/video_coding/codecs/vp8/reference_picture_selection.cc \
+	third_party/webrtc/modules/video_coding/codecs/vp8/vp8_factory.cc \
 	third_party/webrtc/modules/video_coding/codecs/vp8/vp8_impl.cc \
 	third_party/webrtc/modules/video_coding/codecs/vp8/default_temporal_layers.cc \
 	third_party/webrtc/modules/video_coding/codecs/vp8/realtime_temporal_layers.cc
