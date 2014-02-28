@@ -30,7 +30,6 @@ _HOME = os.environ.get('HOME', '')
 _VIE_AUTO_TEST_CMD_LIST = [
     'vie_auto_test',
     '--automated',
-    '--gtest_filter=-ViERtpFuzzTest*',
     '--capture_test_ensure_resolution_alignment_in_capture_device=false']
 _WIN_TESTS = {
     'vie_auto_test': _VIE_AUTO_TEST_CMD_LIST,
@@ -51,8 +50,7 @@ _MAC_TESTS = {
 _LINUX_TESTS = {
     'vie_auto_test': _VIE_AUTO_TEST_CMD_LIST,
     'voe_auto_test': ['voe_auto_test',
-                      '--automated',
-                      '--gtest_filter=-RtpFuzzTest.*'],
+                      '--automated'],
     'audio_e2e_test': ['python',
                        'run_audio_test.py',
                        '--input=../../resources/e2e_audio_in.pcm',
@@ -116,6 +114,9 @@ def main():
 
   print 'Running WebRTC Buildbot tests: %s' % options.test
   for test in options.test:
+    if test == 'libjingle_peerconnection_java_unittest':
+      print 'Skipping disabled test: %s, see webrtc:2960' % test
+      continue
     cmd_line = test_dict[test]
     env = os.environ.copy()
     if test in _CUSTOM_ENV:
