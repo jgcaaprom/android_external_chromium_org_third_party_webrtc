@@ -11,9 +11,10 @@
 #ifndef WEBRTC_MODULES_REMOTE_BITRATE_ESTIMATOR_TEST_BWE_TEST_FRAMEWORK_H_
 #define WEBRTC_MODULES_REMOTE_BITRATE_ESTIMATOR_TEST_BWE_TEST_FRAMEWORK_H_
 
+#include <assert.h>
+#include <math.h>
+
 #include <algorithm>
-#include <cassert>
-#include <cmath>
 #include <list>
 #include <numeric>
 #include <string>
@@ -71,7 +72,7 @@ template<typename T> class Stats {
     return variance_;
   }
   T GetStdDev() {
-    return std::sqrt(static_cast<double>(GetVariance()));
+    return sqrt(static_cast<double>(GetVariance()));
   }
   T GetMin() {
     RefreshMinMax();
@@ -312,6 +313,7 @@ class TraceBasedDeliveryFilter : public PacketProcessor {
   void ProceedToNextSlot();
 
   typedef std::vector<int64_t> TimeList;
+  int64_t current_offset_us_;
   TimeList delivery_times_us_;
   TimeList::const_iterator next_delivery_it_;
   int64_t local_time_us_;

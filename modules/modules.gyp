@@ -43,6 +43,7 @@
       'includes': [
         'audio_coding/codecs/isac/isac_test.gypi',
         'audio_coding/codecs/isac/isacfix_test.gypi',
+        'audio_coding/codecs/tools/audio_codec_speed_tests.gypi',
         'audio_processing/audio_processing_tests.gypi',
         'rtp_rtcp/test/testFec/test_fec.gypi',
         'video_coding/main/source/video_coding_test.gypi',
@@ -114,6 +115,7 @@
             'audio_coding/codecs/isac/fix/source/transform_unittest.cc',
             'audio_coding/codecs/isac/main/source/isac_unittest.cc',
             'audio_coding/codecs/opus/opus_unittest.cc',
+            'audio_coding/neteq4/audio_classifier_unittest.cc',
             'audio_coding/neteq4/audio_multi_vector_unittest.cc',
             'audio_coding/neteq4/audio_vector_unittest.cc',
             'audio_coding/neteq4/background_noise_unittest.cc',
