@@ -120,6 +120,7 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_RESTRICT_LOGGING' \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
+	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
@@ -155,7 +156,8 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
 	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq4/interface \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -238,6 +240,7 @@ MY_DEFS_Release := \
 	'-DWEBRTC_RESTRICT_LOGGING' \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
+	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
@@ -274,7 +277,8 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
 	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq4/interface \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport

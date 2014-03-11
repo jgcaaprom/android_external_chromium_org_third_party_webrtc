@@ -24,6 +24,7 @@ GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/neteq4/accelerate.cc \
+	third_party/webrtc/modules/audio_coding/neteq4/audio_classifier.cc \
 	third_party/webrtc/modules/audio_coding/neteq4/audio_decoder_impl.cc \
 	third_party/webrtc/modules/audio_coding/neteq4/audio_decoder.cc \
 	third_party/webrtc/modules/audio_coding/neteq4/audio_multi_vector.cc \
@@ -124,6 +125,7 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_RESTRICT_LOGGING' \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
+	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
@@ -144,15 +146,16 @@ MY_DEFS_Debug := \
 LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH) \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq4/interface \
-	$(LOCAL_PATH)/third_party/webrtc \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/g711/include \
+	$(LOCAL_PATH)/third_party/webrtc \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/g722/include \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/pcm16b/include \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/ilbc/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/main/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/fix/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/cng/include \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/resampler/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
@@ -239,6 +242,7 @@ MY_DEFS_Release := \
 	'-DWEBRTC_RESTRICT_LOGGING' \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
+	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
@@ -260,15 +264,16 @@ MY_DEFS_Release := \
 LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH) \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq4/interface \
-	$(LOCAL_PATH)/third_party/webrtc \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/g711/include \
+	$(LOCAL_PATH)/third_party/webrtc \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/g722/include \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/pcm16b/include \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/ilbc/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/main/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/fix/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/cng/include \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/resampler/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
