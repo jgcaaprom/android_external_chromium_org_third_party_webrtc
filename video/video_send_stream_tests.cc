@@ -915,16 +915,9 @@ TEST_F(VideoSendStreamTest, SuspendBelowMinBitrate) {
         SendRtcpFeedback(low_remb_bps_);
         test_state_ = kDuringSuspend;
       } else if (test_state_ == kDuringSuspend) {
-        assert(*send_stream_ptr_);
-        VideoSendStream::Stats stats = (*send_stream_ptr_)->GetStats();
-        EXPECT_TRUE(stats.suspended);
         if (header.paddingLength == 0) {
           // Received non-padding packet during suspension period. Reset the
           // counter.
-          // TODO(hlundin): We should probably make this test more advanced in
-          // the future, so that it verifies that the bitrate can go below the
-          // min_bitrate. This requires that the fake encoder sees the
-          // min_bitrate, and never goes below it. See WebRTC Issue 2655.
           suspended_frame_count_ = 0;
         }
       } else if (test_state_ == kWaitingForPacket) {
@@ -945,6 +938,9 @@ TEST_F(VideoSendStreamTest, SuspendBelowMinBitrate) {
       CriticalSectionScoped lock(crit_sect_.get());
       if (test_state_ == kDuringSuspend &&
           ++suspended_frame_count_ > kSuspendTimeFrames) {
+        assert(*send_stream_ptr_);
+        VideoSendStream::Stats stats = (*send_stream_ptr_)->GetStats();
+        EXPECT_TRUE(stats.suspended);
         SendRtcpFeedback(high_remb_bps_);
         test_state_ = kWaitingForPacket;
       }

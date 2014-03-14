@@ -219,7 +219,7 @@ class LowRateStreamObserver : public test::DirectTransport,
         number_of_streams_(number_of_streams),
         rtx_used_(rtx_used),
         send_stream_(NULL),
-        suspended_in_stats_(true) {
+        suspended_in_stats_(false) {
     RtpRtcp::Configuration config;
     config.receive_statistics = receive_stats_.get();
     feedback_transport_.Enable();
@@ -522,6 +522,8 @@ class RampUpTest : public ::testing::Test {
 
     EXPECT_EQ(kEventSignaled, stream_observer.Wait());
 
+    stream_observer.StopSending();
+    receiver_transport.StopSending();
     frame_generator_capturer->Stop();
     send_stream->StopSending();
 
@@ -539,19 +541,10 @@ TEST_F(RampUpTest, WithPacingAndRtx) { RunRampUpTest(true, true); }
 
 TEST_F(RampUpTest, UpDownUpOneStream) { RunRampUpDownUpTest(1, false); }
 
-// TODO(hlundin): Find out why these tests are failing on some bots and
-// re-enable.
-// See https://code.google.com/p/webrtc/issues/detail?id=3010.
-TEST_F(RampUpTest, DISABLED_UpDownUpThreeStreams) {
-  RunRampUpDownUpTest(3, false);
-}
+TEST_F(RampUpTest, UpDownUpThreeStreams) { RunRampUpDownUpTest(3, false); }
 
-TEST_F(RampUpTest, DISABLED_UpDownUpOneStreamRtx) {
-  RunRampUpDownUpTest(1, true);
-}
+TEST_F(RampUpTest, UpDownUpOneStreamRtx) { RunRampUpDownUpTest(1, true); }
 
-TEST_F(RampUpTest, DISABLED_UpDownUpThreeStreamsRtx) {
-  RunRampUpDownUpTest(3, true);
-}
+TEST_F(RampUpTest, UpDownUpThreeStreamsRtx) { RunRampUpDownUpTest(3, true); }
 
 }  // namespace webrtc
