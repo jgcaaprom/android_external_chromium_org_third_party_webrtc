@@ -14,10 +14,10 @@
 
 #include "webrtc/modules/audio_coding/neteq4/interface/neteq.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>  // memset
 
-#include <cmath>
 #include <set>
 #include <string>
 #include <vector>
@@ -220,6 +220,7 @@ class NetEqDecodingTest : public ::testing::Test {
                 bool expect_seq_no_wrap, bool expect_timestamp_wrap);
 
   void LongCngWithClockDrift(double drift_factor);
+  void DuplicateCng();
 
   NetEq* neteq_;
   FILE* rtp_fp_;
@@ -788,15 +789,14 @@ void NetEqDecodingTest::LongCngWithClockDrift(double drift_factor) {
   EXPECT_GE(delay_after, delay_before - 20 * 16);
 }
 
-TEST_F(NetEqDecodingTest, DISABLED_ON_ANDROID(LongCngWithClockNegativeDrift)) {
+TEST_F(NetEqDecodingTest, DISABLED_ON_ANDROID(LongCngWithNegativeClockDrift)) {
   // Apply a clock drift of -25 ms / s (sender faster than receiver).
   const double kDriftFactor = 1000.0 / (1000.0 + 25.0);
   LongCngWithClockDrift(kDriftFactor);
 }
 
 // TODO(hlundin): Re-enable this test and fix the issues to make it pass.
-TEST_F(NetEqDecodingTest,
-       DISABLED_ON_ANDROID(DISABLED_LongCngWithClockPositiveDrift)) {
+TEST_F(NetEqDecodingTest, DISABLED_ON_ANDROID(LongCngWithPositiveClockDrift)) {
   // Apply a clock drift of +25 ms / s (sender slower than receiver).
   const double kDriftFactor = 1000.0 / (1000.0 - 25.0);
   LongCngWithClockDrift(kDriftFactor);
@@ -1144,7 +1144,7 @@ void NetEqDecodingTest::WrapTest(uint16_t start_seq_no,
   NetEqOutputType output_type;
   uint32_t receive_timestamp = 0;
 
-  // Insert speech for 1 second.
+  // Insert speech for 2 seconds.
   const int kSpeechDurationMs = 2000;
   int packets_inserted = 0;
   uint16_t last_seq_no;
@@ -1230,4 +1230,81 @@ TEST_F(NetEqDecodingTest, TimestampAndSequenceNumberWrap) {
   WrapTest(0xFFFF - 10, 0xFFFFFFFF - 5000, drop_seq_numbers, true, true);
 }
 
+void NetEqDecodingTest::DuplicateCng() {
+  uint16_t seq_no = 0;
+  uint32_t timestamp = 0;
+  const int kFrameSizeMs = 10;
+  const int kSampleRateKhz = 16;
+  const int kSamples = kFrameSizeMs * kSampleRateKhz;
+  const int kPayloadBytes = kSamples * 2;
+
+  // Insert three speech packet. Three are needed to get the frame length
+  // correct.
+  int out_len;
+  int num_channels;
+  NetEqOutputType type;
+  uint8_t payload[kPayloadBytes] = {0};
+  WebRtcRTPHeader rtp_info;
+  for (int i = 0; i < 3; ++i) {
+    PopulateRtpInfo(seq_no, timestamp, &rtp_info);
+    ASSERT_EQ(0, neteq_->InsertPacket(rtp_info, payload, kPayloadBytes, 0));
+    ++seq_no;
+    timestamp += kSamples;
+
+    // Pull audio once.
+    ASSERT_EQ(0,
+              neteq_->GetAudio(
+                  kMaxBlockSize, out_data_, &out_len, &num_channels, &type));
+    ASSERT_EQ(kBlockSize16kHz, out_len);
+  }
+  // Verify speech output.
+  EXPECT_EQ(kOutputNormal, type);
+
+  // Insert same CNG packet twice.
+  const int kCngPeriodMs = 100;
+  const int kCngPeriodSamples = kCngPeriodMs * kSampleRateKhz;
+  int payload_len;
+  PopulateCng(seq_no, timestamp, &rtp_info, payload, &payload_len);
+  // This is the first time this CNG packet is inserted.
+  ASSERT_EQ(0, neteq_->InsertPacket(rtp_info, payload, payload_len, 0));
+
+  // Pull audio once and make sure CNG is played.
+  ASSERT_EQ(0,
+            neteq_->GetAudio(
+                kMaxBlockSize, out_data_, &out_len, &num_channels, &type));
+  ASSERT_EQ(kBlockSize16kHz, out_len);
+  EXPECT_EQ(kOutputCNG, type);
+  EXPECT_EQ(timestamp - 10, neteq_->PlayoutTimestamp());
+
+  // Insert the same CNG packet again. Note that at this point it is old, since
+  // we have already decoded the first copy of it.
+  ASSERT_EQ(0, neteq_->InsertPacket(rtp_info, payload, payload_len, 0));
+
+  // Pull audio until we have played |kCngPeriodMs| of CNG. Start at 10 ms since
+  // we have already pulled out CNG once.
+  for (int cng_time_ms = 10; cng_time_ms < kCngPeriodMs; cng_time_ms += 10) {
+    ASSERT_EQ(0,
+              neteq_->GetAudio(
+                  kMaxBlockSize, out_data_, &out_len, &num_channels, &type));
+    ASSERT_EQ(kBlockSize16kHz, out_len);
+    EXPECT_EQ(kOutputCNG, type);
+    EXPECT_EQ(timestamp - 10, neteq_->PlayoutTimestamp());
+  }
+
+  // Insert speech again.
+  ++seq_no;
+  timestamp += kCngPeriodSamples;
+  PopulateRtpInfo(seq_no, timestamp, &rtp_info);
+  ASSERT_EQ(0, neteq_->InsertPacket(rtp_info, payload, kPayloadBytes, 0));
+
+  // Pull audio once and verify that the output is speech again.
+  ASSERT_EQ(0,
+            neteq_->GetAudio(
+                kMaxBlockSize, out_data_, &out_len, &num_channels, &type));
+  ASSERT_EQ(kBlockSize16kHz, out_len);
+  EXPECT_EQ(kOutputNormal, type);
+  EXPECT_EQ(timestamp + kSamples - 10, neteq_->PlayoutTimestamp());
+}
+
+TEST_F(NetEqDecodingTest, DiscardDuplicateCng) { DuplicateCng(); }
 }  // namespace webrtc

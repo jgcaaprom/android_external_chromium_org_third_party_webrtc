@@ -149,6 +149,7 @@ ViEEncoder::ViEEncoder(int32_t engine_id,
     bitrate_controller_(bitrate_controller),
     time_of_last_incoming_frame_ms_(0),
     send_padding_(false),
+    min_transmit_bitrate_kbps_(0),
     target_delay_ms_(0),
     network_is_transmitting_(true),
     encoder_paused_(false),
@@ -385,6 +386,11 @@ int32_t ViEEncoder::DeRegisterExternalEncoder(uint8_t pl_type) {
       CriticalSectionScoped cs(data_cs_.get());
       send_padding_ = current_send_codec.numberOfSimulcastStreams > 1;
     }
+    // TODO(mflodman): Unfortunately the VideoCodec that VCM has cached a
+    // raw pointer to an |extra_options| that's long gone.  Clearing it here is
+    // a hack to prevent the following code from crashing.  This should be fixed
+    // for realz.  https://code.google.com/p/chromium/issues/detail?id=348222
+    current_send_codec.extra_options = NULL;
     if (vcm_.RegisterSendCodec(&current_send_codec, number_of_cores_,
                                max_data_payload_length) != VCM_OK) {
       WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideo,
@@ -454,9 +460,14 @@ int32_t ViEEncoder::SetEncoder(const webrtc::VideoCodec& video_codec) {
                                           kTransmissionMaxBitrateMultiplier *
                                           video_codec.maxBitrate * 1000);
 
-  paced_sender_->UpdateBitrate(video_codec.startBitrate,
-                               video_codec.startBitrate,
-                               video_codec.startBitrate);
+  CriticalSectionScoped crit(data_cs_.get());
+  int pad_up_to_bitrate_kbps = video_codec.startBitrate;
+  if (pad_up_to_bitrate_kbps < min_transmit_bitrate_kbps_)
+    pad_up_to_bitrate_kbps = min_transmit_bitrate_kbps_;
+
+  paced_sender_->UpdateBitrate(
+      video_codec.startBitrate, pad_up_to_bitrate_kbps, pad_up_to_bitrate_kbps);
+
   return 0;
 }
 
@@ -522,7 +533,8 @@ int ViEEncoder::TimeToSendPadding(int bytes) {
   bool send_padding;
   {
     CriticalSectionScoped cs(data_cs_.get());
-    send_padding = send_padding_ || video_suspended_;
+    send_padding =
+        send_padding_ || video_suspended_ || min_transmit_bitrate_kbps_ > 0;
   }
   if (send_padding) {
     return default_rtp_rtcp_->TimeToSendPadding(bytes);
@@ -732,6 +744,10 @@ int32_t ViEEncoder::SendCodecStatistics(
   *num_key_frames = sent_frames.numKeyFrames;
   *num_delta_frames = sent_frames.numDeltaFrames;
   return 0;
+}
+
+int32_t ViEEncoder::PacerQueuingDelayMs() const {
+  return paced_sender_->QueueInMs();
 }
 
 int32_t ViEEncoder::EstimatedSendBandwidth(
@@ -1019,6 +1035,12 @@ bool ViEEncoder::SetSsrcs(const std::list<unsigned int>& ssrcs) {
   return true;
 }
 
+void ViEEncoder::SetMinTransmitBitrate(int min_transmit_bitrate_kbps) {
+  assert(min_transmit_bitrate_kbps >= 0);
+  CriticalSectionScoped crit(data_cs_.get());
+  min_transmit_bitrate_kbps_ = min_transmit_bitrate_kbps;
+}
+
 // Called from ViEBitrateObserver.
 void ViEEncoder::OnNetworkChanged(const uint32_t bitrate_bps,
                                   const uint8_t fraction_lost,
@@ -1082,17 +1104,21 @@ void ViEEncoder::OnNetworkChanged(const uint32_t bitrate_bps,
       max_padding_bitrate_kbps = 0;
   }
 
-  paced_sender_->UpdateBitrate(bitrate_kbps,
-                               max_padding_bitrate_kbps,
-                               pad_up_to_bitrate_kbps);
-  default_rtp_rtcp_->SetTargetSendBitrate(stream_bitrates);
   {
     CriticalSectionScoped cs(data_cs_.get());
+    if (pad_up_to_bitrate_kbps < min_transmit_bitrate_kbps_)
+      pad_up_to_bitrate_kbps = min_transmit_bitrate_kbps_;
+    if (max_padding_bitrate_kbps < min_transmit_bitrate_kbps_)
+      max_padding_bitrate_kbps = min_transmit_bitrate_kbps_;
+    paced_sender_->UpdateBitrate(
+        bitrate_kbps, max_padding_bitrate_kbps, pad_up_to_bitrate_kbps);
+    default_rtp_rtcp_->SetTargetSendBitrate(stream_bitrates);
     if (video_suspended_ == video_is_suspended)
       return;
     video_suspended_ = video_is_suspended;
   }
   // State changed, inform codec observer.
+  CriticalSectionScoped crit(callback_cs_.get());
   if (codec_observer_) {
     WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideo,
                  ViEId(engine_id_, channel_id_),
@@ -1144,6 +1170,7 @@ int ViEEncoder::StopDebugRecording() {
 void ViEEncoder::SuspendBelowMinBitrate() {
   vcm_.SuspendBelowMinBitrate();
   bitrate_controller_->EnforceMinBitrate(false);
+  bitrate_controller_->SetBweMinBitrate(10000);
 }
 
 void ViEEncoder::RegisterPreEncodeCallback(
