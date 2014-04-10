@@ -6,8 +6,9 @@ LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 LOCAL_MODULE := third_party_webrtc_modules_audioproc_debug_proto_gyp
 LOCAL_MODULE_SUFFIX := .a
 LOCAL_MODULE_TAGS := optional
-gyp_intermediate_dir := $(call local-intermediates-dir)
-gyp_shared_intermediate_dir := $(call intermediates-dir-for,GYP,shared)
+LOCAL_MODULE_TARGET_ARCH := $(TARGET_$(GYP_VAR_PREFIX)ARCH)
+gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
+gyp_shared_intermediate_dir := $(call intermediates-dir-for,GYP,shared,,,$(GYP_VAR_PREFIX))
 
 # Make sure our deps are built first.
 GYP_TARGET_DEPENDENCIES := \
@@ -25,10 +26,7 @@ $(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py: $(L
 
 $(gyp_shared_intermediate_dir)/protoc_out/webrtc/audio_processing/debug.pb.cc: $(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py ;
 $(gyp_shared_intermediate_dir)/protoc_out/webrtc/audio_processing/debug.pb.h: $(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py ;
-.PHONY: third_party_webrtc_modules_audioproc_debug_proto_gyp_rule_trigger
-third_party_webrtc_modules_audioproc_debug_proto_gyp_rule_trigger: $(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py
 
-### Finished generating for all rules
 
 GYP_GENERATED_OUTPUTS := \
 	$(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py \
@@ -44,8 +42,7 @@ $(gyp_intermediate_dir)/debug.pb.cc: $(gyp_shared_intermediate_dir)/protoc_out/w
 LOCAL_GENERATED_SOURCES := \
 	$(gyp_intermediate_dir)/debug.pb.cc \
 	$(gyp_shared_intermediate_dir)/pyproto/webrtc/audio_processing/debug_pb2.py \
-	$(gyp_shared_intermediate_dir)/protoc_out/webrtc/audio_processing/debug.pb.h \
-	third_party_webrtc_modules_audioproc_debug_proto_gyp_rule_trigger
+	$(gyp_shared_intermediate_dir)/protoc_out/webrtc/audio_processing/debug.pb.h
 
 GYP_COPIED_SOURCE_ORIGIN_DIRS := \
 	$(gyp_shared_intermediate_dir)/protoc_out/webrtc/audio_processing
@@ -275,9 +272,9 @@ LOCAL_ASFLAGS := $(LOCAL_CFLAGS)
 ### Rules for final target.
 
 LOCAL_LDFLAGS_Debug := \
-	-Wl,--fatal-warnings \
 	-Wl,-z,now \
 	-Wl,-z,relro \
+	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
 	-m32 \
@@ -292,9 +289,9 @@ LOCAL_LDFLAGS_Debug := \
 
 
 LOCAL_LDFLAGS_Release := \
-	-Wl,--fatal-warnings \
 	-Wl,-z,now \
 	-Wl,-z,relro \
+	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
 	-m32 \
