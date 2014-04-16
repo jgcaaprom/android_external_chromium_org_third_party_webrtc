@@ -31,7 +31,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/voice_engine/level_indicator.cc \
 	third_party/webrtc/voice_engine/monitor_module.cc \
 	third_party/webrtc/voice_engine/output_mixer.cc \
-	third_party/webrtc/voice_engine/output_mixer_internal.cc \
 	third_party/webrtc/voice_engine/shared_data.cc \
 	third_party/webrtc/voice_engine/statistics.cc \
 	third_party/webrtc/voice_engine/transmit_mixer.cc \

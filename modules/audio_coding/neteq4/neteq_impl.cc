@@ -97,7 +97,7 @@ NetEqImpl::NetEqImpl(int fs,
         "Changing to 8000 Hz.";
     fs = 8000;
   }
-  LOG(LS_INFO) << "Create NetEqImpl object with fs = " << fs << ".";
+  LOG(LS_VERBOSE) << "Create NetEqImpl object with fs = " << fs << ".";
   fs_hz_ = fs;
   fs_mult_ = fs / 8000;
   output_size_samples_ = kOutputSizeMs * 8 * fs_mult_;
@@ -400,6 +400,11 @@ NetEqBackgroundNoiseMode NetEqImpl::BackgroundNoiseMode() const {
   CriticalSectionScoped lock(crit_sect_.get());
   assert(background_noise_.get());
   return background_noise_->mode();
+}
+
+const SyncBuffer* NetEqImpl::sync_buffer_for_test() const {
+  CriticalSectionScoped lock(crit_sect_.get());
+  return sync_buffer_.get();
 }
 
 // Methods below this line are private.
