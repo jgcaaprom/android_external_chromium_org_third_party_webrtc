@@ -49,6 +49,7 @@
         'CODEC_PCM16B_WB',
         'CODEC_ISAC_SWB',
         'CODEC_PCM16B_32KHZ',
+        'CODEC_PCM16B_48KHZ',
         'CODEC_CNGCODEC8',
         'CODEC_CNGCODEC16',
         'CODEC_CNGCODEC32',
@@ -84,7 +85,7 @@
       'target_name': 'rtp_analyze',
       'type': 'executable',
       'dependencies': [
-        'NetEq4TestTools',
+        'neteq_unittest_tools',
         '<(DEPTH)/testing/gtest.gyp:gtest',
         '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
       ],

@@ -317,8 +317,8 @@ void* GainControlImpl::CreateHandle() const {
   return handle;
 }
 
-int GainControlImpl::DestroyHandle(void* handle) const {
-  return WebRtcAgc_Free(static_cast<Handle*>(handle));
+void GainControlImpl::DestroyHandle(void* handle) const {
+  WebRtcAgc_Free(static_cast<Handle*>(handle));
 }
 
 int GainControlImpl::InitializeHandle(void* handle) const {
@@ -326,7 +326,7 @@ int GainControlImpl::InitializeHandle(void* handle) const {
                           minimum_capture_level_,
                           maximum_capture_level_,
                           MapSetting(mode_),
-                          apm_->sample_rate_hz());
+                          apm_->proc_sample_rate_hz());
 }
 
 int GainControlImpl::ConfigureHandle(void* handle) const {

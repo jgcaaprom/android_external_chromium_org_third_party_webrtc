@@ -19,8 +19,6 @@
       'sources': [
         'device_info_impl.cc',
         'device_info_impl.h',
-        'ensure_initialized.cc',
-        'ensure_initialized.h',
         'include/video_capture.h',
         'include/video_capture_defines.h',
         'include/video_capture_factory.h',
@@ -135,6 +133,15 @@
     },
   ],
   'conditions': [
+    ['include_tests==1 and build_with_chromium==1 and OS=="android" and gtest_target_type=="shared_library"', {
+      # Use WebRTC capture code for Android APK tests that are built from a
+      # Chromium checkout. Normally when built as a part of Chromium the
+      # Chromium video capture code is used. This overrides the default in
+      # webrtc/build/common.gypi.
+      'variables': {
+        'include_internal_video_capture': 1,
+      },
+    }],
     ['include_tests==1', {
       'targets': [
         {
@@ -147,6 +154,8 @@
             '<(DEPTH)/testing/gtest.gyp:gtest',
           ],
           'sources': [
+            'ensure_initialized.cc',
+            'ensure_initialized.h',
             'test/video_capture_unittest.cc',
             'test/video_capture_main_mac.mm',
           ],

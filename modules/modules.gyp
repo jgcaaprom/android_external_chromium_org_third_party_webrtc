@@ -103,6 +103,7 @@
           ],
           'sources': [
             'audio_coding/main/acm2/acm_receiver_unittest.cc',
+            'audio_coding/main/acm2/audio_coding_module_unittest.cc',
             'audio_coding/main/acm2/call_statistics_unittest.cc',
             'audio_coding/main/acm2/initial_delay_manager_unittest.cc',
             'audio_coding/main/acm2/nack_unittest.cc',
@@ -152,6 +153,7 @@
             'audio_coding/neteq4/mock/mock_external_decoder_pcm16b.h',
             'audio_coding/neteq4/mock/mock_packet_buffer.h',
             'audio_coding/neteq4/mock/mock_payload_splitter.h',
+            'audio_coding/neteq4/tools/packet_unittest.cc',
             'audio_processing/aec/system_delay_unittest.cc',
             'audio_processing/aec/echo_cancellation_unittest.cc',
             'audio_processing/echo_cancellation_impl_unittest.cc',
