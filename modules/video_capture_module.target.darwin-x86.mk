@@ -25,7 +25,6 @@ GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/video_capture/device_info_impl.cc \
-	third_party/webrtc/modules/video_capture/ensure_initialized.cc \
 	third_party/webrtc/modules/video_capture/video_capture_factory.cc \
 	third_party/webrtc/modules/video_capture/video_capture_impl.cc \
 	third_party/webrtc/modules/video_capture/external/device_info_external.cc \
