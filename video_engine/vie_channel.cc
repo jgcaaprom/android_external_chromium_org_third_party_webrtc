@@ -76,7 +76,7 @@ ViEChannel::ViEChannel(int32_t channel_id,
       callback_cs_(CriticalSectionWrapper::CreateCriticalSection()),
       rtp_rtcp_cs_(CriticalSectionWrapper::CreateCriticalSection()),
       default_rtp_rtcp_(default_rtp_rtcp),
-      vcm_(*VideoCodingModule::Create(ViEModuleId(engine_id, channel_id))),
+      vcm_(*VideoCodingModule::Create()),
       vie_receiver_(channel_id, &vcm_, remote_bitrate_estimator, this),
       vie_sender_(channel_id),
       vie_sync_(&vcm_, this),
@@ -1403,8 +1403,11 @@ int32_t ViEChannel::FrameToRender(
                                            video_frame.height());
       scoped_array<uint8_t> video_buffer(new uint8_t[length]);
       ExtractBuffer(video_frame, length, video_buffer.get());
-      effect_filter_->Transform(length, video_buffer.get(),
-                                video_frame.timestamp(), video_frame.width(),
+      effect_filter_->Transform(length,
+                                video_buffer.get(),
+                                video_frame.ntp_time_ms(),
+                                video_frame.timestamp(),
+                                video_frame.width(),
                                 video_frame.height());
     }
     if (color_enhancement_) {

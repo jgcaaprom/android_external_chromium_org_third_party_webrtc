@@ -86,8 +86,6 @@ int VoiceEngineImpl::Release() {
 
 VoiceEngine* VoiceEngine::Create() {
   Config* config = new Config();
-  config->Set<AudioCodingModuleFactory>(new AudioCodingModuleFactory());
-
   return GetVoiceEngine(config, true);
 }
 

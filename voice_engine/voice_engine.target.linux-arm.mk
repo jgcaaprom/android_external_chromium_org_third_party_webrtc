@@ -37,7 +37,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/voice_engine/utility.cc \
 	third_party/webrtc/voice_engine/voe_audio_processing_impl.cc \
 	third_party/webrtc/voice_engine/voe_base_impl.cc \
-	third_party/webrtc/voice_engine/voe_call_report_impl.cc \
 	third_party/webrtc/voice_engine/voe_codec_impl.cc \
 	third_party/webrtc/voice_engine/voe_dtmf_impl.cc \
 	third_party/webrtc/voice_engine/voe_external_media_impl.cc \
@@ -291,7 +290,6 @@ LOCAL_LDFLAGS_Debug := \
 	-Wl,--no-undefined \
 	-Wl,--exclude-libs=ALL \
 	-Wl,--icf=safe \
-	-Wl,--gc-sections \
 	-Wl,--warn-shared-textrel \
 	-Wl,-O1 \
 	-Wl,--as-needed

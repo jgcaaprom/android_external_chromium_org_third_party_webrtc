@@ -241,7 +241,7 @@ int EchoControlMobileImpl::Initialize() {
     return apm_->kNoError;
   }
 
-  if (apm_->sample_rate_hz() == apm_->kSampleRate32kHz) {
+  if (apm_->proc_sample_rate_hz() > apm_->kSampleRate16kHz) {
     LOG(LS_ERROR) << "AECM only supports 16 kHz or lower sample rates";
     return apm_->kBadSampleRateError;
   }
@@ -260,14 +260,14 @@ void* EchoControlMobileImpl::CreateHandle() const {
   return handle;
 }
 
-int EchoControlMobileImpl::DestroyHandle(void* handle) const {
-  return WebRtcAecm_Free(static_cast<Handle*>(handle));
+void EchoControlMobileImpl::DestroyHandle(void* handle) const {
+  WebRtcAecm_Free(static_cast<Handle*>(handle));
 }
 
 int EchoControlMobileImpl::InitializeHandle(void* handle) const {
   assert(handle != NULL);
   Handle* my_handle = static_cast<Handle*>(handle);
-  if (WebRtcAecm_Init(my_handle, apm_->sample_rate_hz()) != 0) {
+  if (WebRtcAecm_Init(my_handle, apm_->proc_sample_rate_hz()) != 0) {
     return GetHandleError(my_handle);
   }
   if (external_echo_path_ != NULL) {

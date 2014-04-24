@@ -67,6 +67,15 @@ enum NetEqBackgroundNoiseMode {
 // This is the interface class for NetEq.
 class NetEq {
  public:
+  struct Config {
+    Config()
+        : sample_rate_hz(16000),
+          enable_audio_classifier(false) {}
+
+    int sample_rate_hz;  // Initial vale. Will change with input data.
+    bool enable_audio_classifier;
+  };
+
   enum ReturnCodes {
     kOK = 0,
     kFail = -1,
@@ -105,10 +114,10 @@ class NetEq {
   static const int kMaxNumPacketsInBuffer = 50;  // TODO(hlundin): Remove.
   static const int kMaxBytesInBuffer = 113280;  // TODO(hlundin): Remove.
 
-  // Creates a new NetEq object, starting at the sample rate |sample_rate_hz|.
-  // (Note that it will still change the sample rate depending on what payloads
-  // are being inserted; |sample_rate_hz| is just for startup configuration.)
-  static NetEq* Create(int sample_rate_hz);
+  // Creates a new NetEq object, with parameters set in |config|. The |config|
+  // object will only have to be valid for the duration of the call to this
+  // method.
+  static NetEq* Create(const NetEq::Config& config);
 
   virtual ~NetEq() {}
 
@@ -152,11 +161,10 @@ class NetEq {
 
   // Provides an externally created decoder object |decoder| to insert in the
   // decoder database. The decoder implements a decoder of type |codec| and
-  // associates it with |rtp_payload_type|. The decoder operates at the
-  // frequency |sample_rate_hz|. Returns kOK on success, kFail on failure.
+  // associates it with |rtp_payload_type|. Returns kOK on success,
+  // kFail on failure.
   virtual int RegisterExternalDecoder(AudioDecoder* decoder,
                                       enum NetEqDecoder codec,
-                                      int sample_rate_hz,
                                       uint8_t rtp_payload_type) = 0;
 
   // Removes |rtp_payload_type| from the codec database. Returns 0 on success,

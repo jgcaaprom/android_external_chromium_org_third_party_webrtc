@@ -532,7 +532,7 @@ int OutputMixer::GetMixedAudio(int sample_rate_hz,
 }
 
 int32_t
-OutputMixer::DoOperationsOnCombinedSignal()
+OutputMixer::DoOperationsOnCombinedSignal(bool feed_data_to_apm)
 {
     if (_audioFrame.sample_rate_hz_ != _mixingFrequencyHz)
     {
@@ -565,10 +565,8 @@ OutputMixer::DoOperationsOnCombinedSignal()
     }
 
     // --- Far-end Voice Quality Enhancement (AudioProcessing Module)
-    // TODO(ajm): Check with VoEBase if |need_audio_processing| is false.
-    // If so, we don't need to call this method and can avoid the subsequent
-    // resampling. See: https://code.google.com/p/webrtc/issues/detail?id=3147
-    APMAnalyzeReverseStream();
+    if (feed_data_to_apm)
+      APMAnalyzeReverseStream();
 
     // --- External media processing
     {
@@ -604,7 +602,7 @@ void OutputMixer::APMAnalyzeReverseStream() {
   // side. Downmix to mono.
   AudioFrame frame;
   frame.num_channels_ = 1;
-  frame.sample_rate_hz_ = _audioProcessingModulePtr->sample_rate_hz();
+  frame.sample_rate_hz_ = _audioProcessingModulePtr->input_sample_rate_hz();
   RemixAndResample(_audioFrame, &audioproc_resampler_, &frame);
 
   if (_audioProcessingModulePtr->AnalyzeReverseStream(&frame) == -1) {
