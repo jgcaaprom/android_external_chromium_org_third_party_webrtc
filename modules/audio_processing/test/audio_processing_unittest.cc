@@ -81,6 +81,21 @@ void ConvertToFloat(const AudioFrame& frame, ChannelBuffer<float>* cb) {
   ConvertToFloat(frame.data_, cb);
 }
 
+// Number of channels including the keyboard channel.
+int TotalChannelsFromLayout(AudioProcessing::ChannelLayout layout) {
+  switch (layout) {
+    case AudioProcessing::kMono:
+      return 1;
+    case AudioProcessing::kMonoAndKeyboard:
+    case AudioProcessing::kStereo:
+      return 2;
+    case AudioProcessing::kStereoAndKeyboard:
+      return 3;
+  }
+  assert(false);
+  return -1;
+}
+
 int TruncateToMultipleOf10(int value) {
   return (value / 10) * 10;
 }
@@ -229,13 +244,15 @@ std::string ResourceFilePath(std::string name, int sample_rate_hz) {
 }
 
 std::string OutputFilePath(std::string name,
-                           int sample_rate_hz,
+                           int input_rate,
+                           int output_rate,
+                           int reverse_rate,
                            int num_input_channels,
                            int num_output_channels,
                            int num_reverse_channels) {
   std::ostringstream ss;
-  ss << name << sample_rate_hz / 1000 << "_" << num_reverse_channels << "r" <<
-      num_input_channels << "i" << "_";
+  ss << name << "_i" << num_input_channels << "_" << input_rate / 1000
+     << "_r" << num_reverse_channels << "_" << reverse_rate  / 1000 << "_";
   if (num_output_channels == 1) {
     ss << "mono";
   } else if (num_output_channels == 2) {
@@ -243,7 +260,7 @@ std::string OutputFilePath(std::string name,
   } else {
     assert(false);
   }
-  ss << ".pcm";
+  ss << output_rate / 1000 << ".pcm";
 
   return test::OutputPath() + ss.str();
 }
@@ -427,8 +444,13 @@ void ApmTest::Init(int sample_rate_hz,
     if (out_file_) {
       ASSERT_EQ(0, fclose(out_file_));
     }
-    filename = OutputFilePath("out", sample_rate_hz, num_input_channels,
-                              num_output_channels, num_reverse_channels);
+    filename = OutputFilePath("out",
+                              sample_rate_hz,
+                              output_sample_rate_hz,
+                              reverse_sample_rate_hz,
+                              num_input_channels,
+                              num_output_channels,
+                              num_reverse_channels);
     out_file_ = fopen(filename.c_str(), "wb");
     ASSERT_TRUE(out_file_ != NULL) << "Could not open file " <<
           filename << "\n";
@@ -1909,6 +1931,43 @@ TEST_F(ApmTest, DISABLED_ON_ANDROID(Process)) {
 
 #endif  // WEBRTC_AUDIOPROC_BIT_EXACT
 
+TEST_F(ApmTest, NoErrorsWithKeyboardChannel) {
+  struct ChannelFormat {
+    AudioProcessing::ChannelLayout in_layout;
+    AudioProcessing::ChannelLayout out_layout;
+  };
+  ChannelFormat cf[] = {
+    {AudioProcessing::kMonoAndKeyboard, AudioProcessing::kMono},
+    {AudioProcessing::kStereoAndKeyboard, AudioProcessing::kMono},
+    {AudioProcessing::kStereoAndKeyboard, AudioProcessing::kStereo},
+  };
+  size_t channel_format_size = sizeof(cf) / sizeof(*cf);
+
+  scoped_ptr<AudioProcessing> ap(AudioProcessing::Create());
+  // Enable one component just to ensure some processing takes place.
+  ap->noise_suppression()->Enable(true);
+  for (size_t i = 0; i < channel_format_size; ++i) {
+    const int in_rate = 44100;
+    const int out_rate = 48000;
+    ChannelBuffer<float> in_cb(SamplesFromRate(in_rate),
+                               TotalChannelsFromLayout(cf[i].in_layout));
+    ChannelBuffer<float> out_cb(SamplesFromRate(out_rate),
+                                ChannelsFromLayout(cf[i].out_layout));
+
+    // Run over a few chunks.
+    for (int j = 0; j < 10; ++j) {
+      EXPECT_NOERR(ap->ProcessStream(
+          in_cb.channels(),
+          in_cb.samples_per_channel(),
+          in_rate,
+          cf[i].in_layout,
+          out_rate,
+          cf[i].out_layout,
+          out_cb.channels()));
+    }
+  }
+}
+
 // Reads a 10 ms chunk of int16 interleaved audio from the given (assumed
 // stereo) file, converts to deinterleaved float (optionally downmixing) and
 // returns the result in |cb|. Returns false if the file ended (or on error) and
@@ -2046,7 +2105,9 @@ class AudioProcessingTest
     FILE* far_file = fopen(ResourceFilePath("far", reverse_rate).c_str(), "rb");
     FILE* near_file = fopen(ResourceFilePath("near", input_rate).c_str(), "rb");
     FILE* out_file = fopen(OutputFilePath(output_file_prefix,
+                                          input_rate,
                                           output_rate,
+                                          reverse_rate,
                                           num_input_channels,
                                           num_output_channels,
                                           num_reverse_channels).c_str(), "wb");
@@ -2152,12 +2213,16 @@ TEST_P(AudioProcessingTest, Formats) {
 #endif
 
     FILE* out_file = fopen(OutputFilePath("out",
+                                          input_rate_,
                                           output_rate_,
+                                          reverse_rate_,
                                           cf[i].num_input,
                                           cf[i].num_output,
                                           cf[i].num_reverse).c_str(), "rb");
     // The reference files always have matching input and output channels.
     FILE* ref_file = fopen(OutputFilePath("ref",
+                                          ref_rate,
+                                          ref_rate,
                                           ref_rate,
                                           cf[i].num_output,
                                           cf[i].num_output,

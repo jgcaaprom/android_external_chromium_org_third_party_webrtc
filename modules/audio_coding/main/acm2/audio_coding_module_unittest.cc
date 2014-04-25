@@ -58,8 +58,9 @@ class RtpUtility {
 class AudioCodingModuleTest : public ::testing::Test {
  protected:
   AudioCodingModuleTest()
-      : rtp_utility_(new RtpUtility(kFrameSizeSamples, kPayloadType)),
-        acm2_(AudioCodingModule::Create(1 /*id*/)) {}
+      : id_(1),
+        rtp_utility_(new RtpUtility(kFrameSizeSamples, kPayloadType)),
+        acm_(AudioCodingModule::Create(id_)) {}
 
   ~AudioCodingModuleTest() {}
 
@@ -71,7 +72,7 @@ class AudioCodingModuleTest : public ::testing::Test {
     codec.pltype = kPayloadType;
 
     // Register L16 codec in ACMs.
-    ASSERT_EQ(0, acm2_->RegisterReceiveCodec(codec));
+    ASSERT_EQ(0, acm_->RegisterReceiveCodec(codec));
 
     rtp_utility_->Populate(&rtp_header_);
   }
@@ -81,19 +82,20 @@ class AudioCodingModuleTest : public ::testing::Test {
     const uint8_t kPayload[kPayloadSizeBytes] = {0};
 
     ASSERT_EQ(0,
-              acm2_->IncomingPacket(kPayload, kPayloadSizeBytes, rtp_header_));
+              acm_->IncomingPacket(kPayload, kPayloadSizeBytes, rtp_header_));
 
-    ASSERT_EQ(0, acm2_->PlayoutData10Ms(-1, &audio_frame));
+    ASSERT_EQ(0, acm_->PlayoutData10Ms(-1, &audio_frame));
     rtp_utility_->Forward(&rtp_header_);
   }
 
   void JustPullAudio() {
     AudioFrame audio_frame;
-    ASSERT_EQ(0, acm2_->PlayoutData10Ms(-1, &audio_frame));
+    ASSERT_EQ(0, acm_->PlayoutData10Ms(-1, &audio_frame));
   }
 
+  const int id_;
   scoped_ptr<RtpUtility> rtp_utility_;
-  scoped_ptr<AudioCodingModule> acm2_;
+  scoped_ptr<AudioCodingModule> acm_;
 
   WebRtcRTPHeader rtp_header_;
 };
@@ -102,7 +104,7 @@ class AudioCodingModuleTest : public ::testing::Test {
 // all fields have to be zero.
 TEST_F(AudioCodingModuleTest, DISABLED_ON_ANDROID(InitializedToZero)) {
   AudioDecodingCallStats stats;
-  acm2_->GetDecodingCallStatistics(&stats);
+  acm_->GetDecodingCallStatistics(&stats);
   EXPECT_EQ(0, stats.calls_to_neteq);
   EXPECT_EQ(0, stats.calls_to_silence_generator);
   EXPECT_EQ(0, stats.decoded_normal);
@@ -117,15 +119,14 @@ TEST_F(AudioCodingModuleTest, DISABLED_ON_ANDROID(SilenceGeneratorCalled)) {
   AudioDecodingCallStats stats;
   const int kInitialDelay = 100;
 
-  acm2_->SetInitialPlayoutDelay(kInitialDelay);
+  acm_->SetInitialPlayoutDelay(kInitialDelay);
 
-  AudioFrame audio_frame;
   int num_calls = 0;
   for (int time_ms = 0; time_ms < kInitialDelay;
        time_ms += kFrameSizeMs, ++num_calls) {
     InsertPacketAndPullAudio();
   }
-  acm2_->GetDecodingCallStatistics(&stats);
+  acm_->GetDecodingCallStatistics(&stats);
   EXPECT_EQ(0, stats.calls_to_neteq);
   EXPECT_EQ(num_calls, stats.calls_to_silence_generator);
   EXPECT_EQ(0, stats.decoded_normal);
@@ -141,11 +142,10 @@ TEST_F(AudioCodingModuleTest, DISABLED_ON_ANDROID(NetEqCalls)) {
   AudioDecodingCallStats stats;
   const int kNumNormalCalls = 10;
 
-  AudioFrame audio_frame;
   for (int num_calls = 0; num_calls < kNumNormalCalls; ++num_calls) {
     InsertPacketAndPullAudio();
   }
-  acm2_->GetDecodingCallStatistics(&stats);
+  acm_->GetDecodingCallStatistics(&stats);
   EXPECT_EQ(kNumNormalCalls, stats.calls_to_neteq);
   EXPECT_EQ(0, stats.calls_to_silence_generator);
   EXPECT_EQ(kNumNormalCalls, stats.decoded_normal);
@@ -160,13 +160,32 @@ TEST_F(AudioCodingModuleTest, DISABLED_ON_ANDROID(NetEqCalls)) {
   for (int n = 0; n < kNumPlc + kNumPlcCng; ++n) {
     JustPullAudio();
   }
-  acm2_->GetDecodingCallStatistics(&stats);
+  acm_->GetDecodingCallStatistics(&stats);
   EXPECT_EQ(kNumNormalCalls + kNumPlc + kNumPlcCng, stats.calls_to_neteq);
   EXPECT_EQ(0, stats.calls_to_silence_generator);
   EXPECT_EQ(kNumNormalCalls, stats.decoded_normal);
   EXPECT_EQ(0, stats.decoded_cng);
   EXPECT_EQ(kNumPlc, stats.decoded_plc);
   EXPECT_EQ(kNumPlcCng, stats.decoded_plc_cng);
+}
+
+TEST_F(AudioCodingModuleTest, VerifyOutputFrame) {
+  AudioFrame audio_frame;
+  const int kSampleRateHz = 32000;
+  EXPECT_EQ(0, acm_->PlayoutData10Ms(kSampleRateHz, &audio_frame));
+  // The energy must be -1 in order to have the energy calculated later on in
+  // the AudioConferenceMixer module.
+  EXPECT_EQ(static_cast<uint32_t>(-1), audio_frame.energy_);
+  EXPECT_EQ(id_, audio_frame.id_);
+  EXPECT_EQ(0u, audio_frame.timestamp_);
+  EXPECT_GT(audio_frame.num_channels_, 0);
+  EXPECT_EQ(kSampleRateHz / 100, audio_frame.samples_per_channel_);
+  EXPECT_EQ(kSampleRateHz, audio_frame.sample_rate_hz_);
+}
+
+TEST_F(AudioCodingModuleTest, FailOnZeroDesiredFrequency) {
+  AudioFrame audio_frame;
+  EXPECT_EQ(-1, acm_->PlayoutData10Ms(0, &audio_frame));
 }
 
 }  // namespace webrtc

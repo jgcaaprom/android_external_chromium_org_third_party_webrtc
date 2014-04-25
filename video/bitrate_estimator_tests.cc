@@ -54,7 +54,6 @@ class BitrateEstimatorTest : public ::testing::Test {
     // Create receiver call first so that we are guaranteed to have a trace
     // callback when sender call is created.
     Call::Config receiver_call_config(&receive_transport_);
-    receiver_call_config.trace_callback = &receiver_trace_;
     receiver_call_.reset(Call::Create(receiver_call_config));
 
     Call::Config sender_call_config(&send_transport_);
@@ -175,7 +174,7 @@ class BitrateEstimatorTest : public ::testing::Test {
           test_->send_config_.encoder_settings.streams[0].height,
           30,
           Clock::GetRealTimeClock()));
-      send_stream_->StartSending();
+      send_stream_->Start();
       frame_generator_capturer_->Start();
 
       ExternalVideoDecoder decoder;
@@ -186,7 +185,7 @@ class BitrateEstimatorTest : public ::testing::Test {
       test_->receive_config_.external_decoders.push_back(decoder);
       receive_stream_ = test_->receiver_call_->CreateVideoReceiveStream(
           test_->receive_config_);
-      receive_stream_->StartReceiving();
+      receive_stream_->Start();
 
       is_sending_receiving_ = true;
     }
@@ -202,8 +201,8 @@ class BitrateEstimatorTest : public ::testing::Test {
     void StopSending() {
       if (is_sending_receiving_) {
         frame_generator_capturer_->Stop();
-        send_stream_->StopSending();
-        receive_stream_->StopReceiving();
+        send_stream_->Stop();
+        receive_stream_->Stop();
         is_sending_receiving_ = false;
       }
     }

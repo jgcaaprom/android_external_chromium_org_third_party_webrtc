@@ -1362,9 +1362,13 @@ int AudioCodingModuleImpl::PreprocessToAddData(const AudioFrame& in_frame,
     // The result of the resampler is written to output frame.
     dest_ptr_audio = preprocess_frame_.data_;
 
-    preprocess_frame_.samples_per_channel_ = resampler_.Resample10Msec(
-        src_ptr_audio, in_frame.sample_rate_hz_, send_codec_inst_.plfreq,
-        preprocess_frame_.num_channels_, dest_ptr_audio);
+    preprocess_frame_.samples_per_channel_ =
+        resampler_.Resample10Msec(src_ptr_audio,
+                                  in_frame.sample_rate_hz_,
+                                  send_codec_inst_.plfreq,
+                                  preprocess_frame_.num_channels_,
+                                  AudioFrame::kMaxDataSizeSamples,
+                                  dest_ptr_audio);
 
     if (preprocess_frame_.samples_per_channel_ < 0) {
       WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceAudioCoding, id_,
@@ -1707,7 +1711,9 @@ int AudioCodingModuleImpl::PlayoutData10Ms(int desired_freq_hz,
   }
 
   audio_frame->id_ = id_;
-  audio_frame->energy_ = 0;
+  // The energy must be -1 in order to have the energy calculated later on in
+  // the AudioConferenceMixer module.
+  audio_frame->energy_ = static_cast<uint32_t>(-1);
   audio_frame->timestamp_ = 0;
   return 0;
 }
