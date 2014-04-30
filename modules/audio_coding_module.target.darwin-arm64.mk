@@ -24,31 +24,34 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/modules/audio_coding/main/source/acm_amr.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_amrwb.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_celt.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_cng.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_codec_database.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_dtmf_detection.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_dtmf_playout.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_g722.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_g7221.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_g7221c.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_g729.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_g7291.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_generic_codec.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_gsmfr.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_ilbc.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_isac.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_neteq.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_opus.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_speex.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_pcm16b.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_pcma.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_pcmu.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_red.cc \
-	third_party/webrtc/modules/audio_coding/main/source/acm_resampler.cc \
-	third_party/webrtc/modules/audio_coding/main/source/audio_coding_module_impl.cc
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_amr.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_amrwb.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_celt.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_cng.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_codec_database.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_dtmf_playout.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_g722.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_g7221.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_g7221c.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_g729.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_g7291.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_generic_codec.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_gsmfr.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_ilbc.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_isac.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_opus.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_speex.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_pcm16b.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_pcma.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_pcmu.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_red.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_receiver.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/acm_resampler.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/audio_coding_module.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/audio_coding_module_impl.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/call_statistics.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/initial_delay_manager.cc \
+	third_party/webrtc/modules/audio_coding/main/acm2/nack.cc
 
 
 # Flags passed to both C and C++ files.
@@ -143,11 +146,13 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/main/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/fix/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/pcm16b/include \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq/interface \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/resampler/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
 	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
+	$(LOCAL_PATH)/third_party/opus/src/src \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -256,11 +261,13 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/main/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/isac/fix/interface \
 	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/codecs/pcm16b/include \
-	$(LOCAL_PATH)/third_party/webrtc/modules/audio_coding/neteq/interface \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/resampler/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/signal_processing/include \
 	$(LOCAL_PATH)/third_party/webrtc/common_audio/vad/include \
 	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
+	$(LOCAL_PATH)/third_party/opus/src/celt \
+	$(LOCAL_PATH)/third_party/opus/src/src \
+	$(LOCAL_PATH)/third_party/opus/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
