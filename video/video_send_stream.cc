@@ -37,7 +37,8 @@ VideoSendStream::VideoSendStream(newapi::Transport* transport,
       codec_lock_(CriticalSectionWrapper::CreateCriticalSection()),
       config_(config),
       external_codec_(NULL),
-      channel_(-1) {
+      channel_(-1),
+      stats_proxy_(new SendStatisticsProxy(config, this)) {
   video_engine_base_ = ViEBase::GetInterface(video_engine);
   video_engine_base_->CreateChannel(channel_, base_channel);
   assert(channel_ != -1);
@@ -142,8 +143,6 @@ VideoSendStream::VideoSendStream(newapi::Transport* transport,
     codec_->SuspendBelowMinBitrate(channel_);
   }
 
-  stats_proxy_.reset(new SendStatisticsProxy(config, this));
-
   rtp_rtcp_->RegisterSendChannelRtcpStatisticsCallback(channel_,
                                                        stats_proxy_.get());
   rtp_rtcp_->RegisterSendChannelRtpStatisticsCallback(channel_,
@@ -210,13 +209,13 @@ void VideoSendStream::SwapFrame(I420VideoFrame* frame) {
 
 VideoSendStreamInput* VideoSendStream::Input() { return this; }
 
-void VideoSendStream::StartSending() {
+void VideoSendStream::Start() {
   transport_adapter_.Enable();
   video_engine_base_->StartSend(channel_);
   video_engine_base_->StartReceive(channel_);
 }
 
-void VideoSendStream::StopSending() {
+void VideoSendStream::Stop() {
   video_engine_base_->StopSend(channel_);
   video_engine_base_->StopReceive(channel_);
   transport_adapter_.Disable();

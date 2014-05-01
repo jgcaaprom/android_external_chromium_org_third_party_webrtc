@@ -21,6 +21,7 @@
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/interface/rw_lock_wrapper.h"
 #include "webrtc/system_wrappers/interface/scoped_ptr.h"
+#include "webrtc/system_wrappers/interface/thread_annotations.h"
 #include "webrtc/system_wrappers/interface/trace.h"
 #include "webrtc/video/video_receive_stream.h"
 #include "webrtc/video/video_send_stream.h"
@@ -45,18 +46,18 @@ class CpuOveruseObserverProxy : public webrtc::CpuOveruseObserver {
   virtual ~CpuOveruseObserverProxy() {}
 
   virtual void OveruseDetected() OVERRIDE {
-    CriticalSectionScoped cs(crit_.get());
+    CriticalSectionScoped lock(crit_.get());
     overuse_callback_->OnOveruse();
   }
 
   virtual void NormalUsage() OVERRIDE {
-    CriticalSectionScoped cs(crit_.get());
+    CriticalSectionScoped lock(crit_.get());
     overuse_callback_->OnNormalUse();
   }
 
  private:
-  scoped_ptr<CriticalSectionWrapper> crit_;
-  OveruseCallback* overuse_callback_;
+  const scoped_ptr<CriticalSectionWrapper> crit_;
+  OveruseCallback* overuse_callback_ GUARDED_BY(crit_);
 };
 
 class Call : public webrtc::Call, public PacketReceiver {
@@ -95,10 +96,11 @@ class Call : public webrtc::Call, public PacketReceiver {
 
   Call::Config config_;
 
-  std::map<uint32_t, VideoReceiveStream*> receive_ssrcs_;
+  std::map<uint32_t, VideoReceiveStream*> receive_ssrcs_
+      GUARDED_BY(receive_lock_);
   scoped_ptr<RWLockWrapper> receive_lock_;
 
-  std::map<uint32_t, VideoSendStream*> send_ssrcs_;
+  std::map<uint32_t, VideoSendStream*> send_ssrcs_ GUARDED_BY(send_lock_);
   scoped_ptr<RWLockWrapper> send_lock_;
 
   scoped_ptr<RtpHeaderParser> rtp_header_parser_;
@@ -115,83 +117,7 @@ class Call : public webrtc::Call, public PacketReceiver {
 };
 }  // namespace internal
 
-class TraceDispatcher : public TraceCallback {
- public:
-  TraceDispatcher()
-      : lock_(CriticalSectionWrapper::CreateCriticalSection()),
-        filter_(kTraceNone) {
-    Trace::CreateTrace();
-    VideoEngine::SetTraceCallback(this);
-    VideoEngine::SetTraceFilter(kTraceNone);
-  }
-
-  ~TraceDispatcher() {
-    Trace::ReturnTrace();
-    VideoEngine::SetTraceCallback(NULL);
-  }
-
-  virtual void Print(TraceLevel level,
-                     const char* message,
-                     int length) OVERRIDE {
-    CriticalSectionScoped crit(lock_.get());
-    for (std::map<Call*, Call::Config*>::iterator it = callbacks_.begin();
-         it != callbacks_.end();
-         ++it) {
-      if ((level & it->second->trace_filter) != kTraceNone)
-        it->second->trace_callback->Print(level, message, length);
-    }
-  }
-
-  void RegisterCallback(Call* call, Call::Config* config) {
-    if (config->trace_callback == NULL)
-      return;
-
-    CriticalSectionScoped crit(lock_.get());
-    callbacks_[call] = config;
-
-    filter_ |= config->trace_filter;
-    VideoEngine::SetTraceFilter(filter_);
-  }
-
-  void DeregisterCallback(Call* call) {
-    CriticalSectionScoped crit(lock_.get());
-    callbacks_.erase(call);
-
-    filter_ = kTraceNone;
-    for (std::map<Call*, Call::Config*>::iterator it = callbacks_.begin();
-         it != callbacks_.end();
-         ++it) {
-      filter_ |= it->second->trace_filter;
-    }
-
-    VideoEngine::SetTraceFilter(filter_);
-  }
-
- private:
-  scoped_ptr<CriticalSectionWrapper> lock_;
-  unsigned int filter_;
-  std::map<Call*, Call::Config*> callbacks_;
-};
-
-namespace internal {
-TraceDispatcher* global_trace_dispatcher = NULL;
-}  // internal
-
-void CreateTraceDispatcher() {
-  if (internal::global_trace_dispatcher == NULL) {
-    TraceDispatcher* dispatcher = new TraceDispatcher();
-    // TODO(pbos): Atomic compare and exchange.
-    if (internal::global_trace_dispatcher == NULL) {
-      internal::global_trace_dispatcher = dispatcher;
-    } else {
-      delete dispatcher;
-    }
-  }
-}
-
 Call* Call::Create(const Call::Config& config) {
-  CreateTraceDispatcher();
-
   VideoEngine* video_engine = config.webrtc_config != NULL
                                   ? VideoEngine::Create(*config.webrtc_config)
                                   : VideoEngine::Create();
@@ -217,8 +143,6 @@ Call::Call(webrtc::VideoEngine* video_engine, const Call::Config& config)
         new CpuOveruseObserverProxy(config.overuse_callback));
   }
 
-  global_trace_dispatcher->RegisterCallback(this, &config_);
-
   rtp_rtcp_ = ViERTP_RTCP::GetInterface(video_engine_);
   assert(rtp_rtcp_ != NULL);
 
@@ -235,7 +159,6 @@ Call::Call(webrtc::VideoEngine* video_engine, const Call::Config& config)
 }
 
 Call::~Call() {
-  global_trace_dispatcher->DeregisterCallback(this);
   base_->DeleteChannel(base_channel_id_);
   base_->Release();
   codec_->Release();

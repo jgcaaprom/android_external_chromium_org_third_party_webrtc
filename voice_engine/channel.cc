@@ -3237,6 +3237,17 @@ int Channel::SetSendAudioLevelIndicationStatus(bool enable, unsigned char id) {
   return SetSendRtpHeaderExtension(enable, kRtpExtensionAudioLevel, id);
 }
 
+int Channel::SetReceiveAudioLevelIndicationStatus(bool enable,
+                                                  unsigned char id) {
+  rtp_header_parser_->DeregisterRtpHeaderExtension(
+      kRtpExtensionAudioLevel);
+  if (enable && !rtp_header_parser_->RegisterRtpHeaderExtension(
+          kRtpExtensionAudioLevel, id)) {
+    return -1;
+  }
+  return 0;
+}
+
 int Channel::SetSendAbsoluteSenderTimeStatus(bool enable, unsigned char id) {
   return SetSendRtpHeaderExtension(enable, kRtpExtensionAbsoluteSendTime, id);
 }
@@ -4268,7 +4279,7 @@ Channel::GetRtpRtcp(RtpRtcp** rtpRtcpModule, RtpReceiver** rtp_receiver) const
 int32_t
 Channel::MixOrReplaceAudioWithFile(int mixingFrequency)
 {
-    scoped_array<int16_t> fileBuffer(new int16_t[640]);
+    scoped_ptr<int16_t[]> fileBuffer(new int16_t[640]);
     int fileSamples(0);
 
     {
@@ -4338,7 +4349,7 @@ Channel::MixAudioWithFile(AudioFrame& audioFrame,
 {
     assert(mixingFrequency <= 32000);
 
-    scoped_array<int16_t> fileBuffer(new int16_t[640]);
+    scoped_ptr<int16_t[]> fileBuffer(new int16_t[640]);
     int fileSamples(0);
 
     {

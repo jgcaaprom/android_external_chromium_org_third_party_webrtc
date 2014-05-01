@@ -117,23 +117,23 @@ bool IsCng(int codec_id) {
 
 }  // namespace
 
-AcmReceiver::AcmReceiver(Clock* clock)
-    : id_(0),
-      neteq_config_(),
-      neteq_(NetEq::Create(neteq_config_)),
+AcmReceiver::AcmReceiver(const AudioCodingModule::Config& config)
+    : id_(config.id),
+      neteq_(NetEq::Create(config.neteq_config)),
       last_audio_decoder_(-1),  // Invalid value.
       decode_lock_(RWLockWrapper::CreateRWLock()),
       neteq_crit_sect_(CriticalSectionWrapper::CreateCriticalSection()),
       vad_enabled_(true),
       previous_audio_activity_(AudioFrame::kVadPassive),
-      current_sample_rate_hz_(neteq_config_.sample_rate_hz),
+      current_sample_rate_hz_(config.neteq_config.sample_rate_hz),
       nack_(),
       nack_enabled_(false),
-      clock_(clock),
+      clock_(config.clock),
       av_sync_(false),
       initial_delay_manager_(),
       missing_packets_sync_stream_(),
       late_packets_sync_stream_() {
+  assert(clock_);
   for (int n = 0; n < ACMCodecDB::kMaxNumCodecs; ++n) {
     decoders_[n].registered = false;
   }
@@ -428,9 +428,13 @@ int AcmReceiver::GetAudio(int desired_freq_hz, AudioFrame* audio_frame) {
   if (ptr_audio_buffer == audio_buffer_) {
     // Data is written to local buffer.
     if (need_resampling) {
-      samples_per_channel = resampler_.Resample10Msec(
-          audio_buffer_, current_sample_rate_hz_, desired_freq_hz,
-          num_channels, audio_frame->data_);
+      samples_per_channel =
+          resampler_.Resample10Msec(audio_buffer_,
+                                    current_sample_rate_hz_,
+                                    desired_freq_hz,
+                                    num_channels,
+                                    AudioFrame::kMaxDataSizeSamples,
+                                    audio_frame->data_);
       if (samples_per_channel < 0) {
         LOG_FERR0(LS_ERROR, "AcmReceiver::GetAudio") << "Resampler Failed.";
         return -1;
@@ -444,9 +448,13 @@ int AcmReceiver::GetAudio(int desired_freq_hz, AudioFrame* audio_frame) {
     // Data is written into |audio_frame|.
     if (need_resampling) {
       // We might end up here ONLY if codec is changed.
-      samples_per_channel = resampler_.Resample10Msec(
-          audio_frame->data_, current_sample_rate_hz_, desired_freq_hz,
-          num_channels, audio_buffer_);
+      samples_per_channel =
+          resampler_.Resample10Msec(audio_frame->data_,
+                                    current_sample_rate_hz_,
+                                    desired_freq_hz,
+                                    num_channels,
+                                    AudioFrame::kMaxDataSizeSamples,
+                                    audio_buffer_);
       if (samples_per_channel < 0) {
         LOG_FERR0(LS_ERROR, "AcmReceiver::GetAudio") << "Resampler Failed.";
         return -1;
@@ -757,13 +765,9 @@ bool AcmReceiver::GetSilence(int desired_sample_rate_hz, AudioFrame* frame) {
   // exceeds a threshold.
   int num_packets;
   int max_num_packets;
-  int buffer_size_byte;
-  int max_buffer_size_byte;
   const float kBufferingThresholdScale = 0.9f;
-  neteq_->PacketBufferStatistics(&num_packets, &max_num_packets,
-                                 &buffer_size_byte, &max_buffer_size_byte);
-  if (num_packets > max_num_packets * kBufferingThresholdScale ||
-      buffer_size_byte > max_buffer_size_byte * kBufferingThresholdScale) {
+  neteq_->PacketBufferStatistics(&num_packets, &max_num_packets);
+  if (num_packets > max_num_packets * kBufferingThresholdScale) {
     initial_delay_manager_->DisableBuffering();
     return false;
   }
@@ -776,7 +780,6 @@ bool AcmReceiver::GetSilence(int desired_sample_rate_hz, AudioFrame* frame) {
     current_sample_rate_hz_ = ACMCodecDB::database_[last_audio_decoder_].plfreq;
     frame->num_channels_ = decoders_[last_audio_decoder_].channels;
   } else {
-    current_sample_rate_hz_ = neteq_config_.sample_rate_hz;
     frame->num_channels_ = 1;
   }
 
