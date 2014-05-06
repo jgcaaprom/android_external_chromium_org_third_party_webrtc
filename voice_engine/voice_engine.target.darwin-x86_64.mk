@@ -70,7 +70,6 @@ MY_CFLAGS_Debug := \
 	-fno-builtin-sinf \
 	-m64 \
 	-march=x86-64 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -177,7 +176,6 @@ MY_CFLAGS_Release := \
 	-fno-builtin-sinf \
 	-m64 \
 	-march=x86-64 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \

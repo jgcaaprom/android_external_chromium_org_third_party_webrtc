@@ -73,7 +73,6 @@ MY_CFLAGS_Debug := \
 	-mfpmath=sse \
 	-mmmx \
 	-m32 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -174,7 +173,6 @@ MY_CFLAGS_Release := \
 	-mfpmath=sse \
 	-mmmx \
 	-m32 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \

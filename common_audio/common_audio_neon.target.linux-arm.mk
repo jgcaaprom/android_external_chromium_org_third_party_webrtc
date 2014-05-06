@@ -52,7 +52,6 @@ MY_CFLAGS_Debug := \
 	-mfpu=neon \
 	-flax-vector-conversions \
 	-fno-tree-sra \
-	-fuse-ld=gold \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \
@@ -154,7 +153,6 @@ MY_CFLAGS_Release := \
 	-mfpu=neon \
 	-flax-vector-conversions \
 	-fno-tree-sra \
-	-fuse-ld=gold \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \

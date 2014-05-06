@@ -75,7 +75,6 @@ MY_CFLAGS_Debug := \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
 	-fno-tree-sra \
-	-fuse-ld=gold \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \
@@ -184,7 +183,6 @@ MY_CFLAGS_Release := \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
 	-fno-tree-sra \
-	-fuse-ld=gold \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \
