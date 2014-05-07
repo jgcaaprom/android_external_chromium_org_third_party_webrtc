@@ -48,7 +48,8 @@ ViEReceiver::ViEReceiver(const int32_t channel_id,
       vcm_(module_vcm),
       remote_bitrate_estimator_(remote_bitrate_estimator),
       clock_(Clock::GetRealTimeClock()),
-      ts_extrapolator_(new VCMTimestampExtrapolator(clock_)),
+      ts_extrapolator_(
+          new VCMTimestampExtrapolator(clock_->TimeInMilliseconds())),
       rtp_dump_(NULL),
       receiving_(false),
       restored_packet_in_use_(false),
@@ -458,22 +459,6 @@ int ViEReceiver::StopRTPDump() {
     return -1;
   }
   return 0;
-}
-
-// TODO(holmer): To be moved to ViEChannelGroup.
-void ViEReceiver::EstimatedReceiveBandwidth(
-    unsigned int* available_bandwidth) const {
-  std::vector<unsigned int> ssrcs;
-
-  // LatestEstimate returns an error if there is no valid bitrate estimate, but
-  // ViEReceiver instead returns a zero estimate.
-  remote_bitrate_estimator_->LatestEstimate(&ssrcs, available_bandwidth);
-  if (std::find(ssrcs.begin(), ssrcs.end(), rtp_receiver_->SSRC()) !=
-      ssrcs.end()) {
-    *available_bandwidth /= ssrcs.size();
-  } else {
-    *available_bandwidth = 0;
-  }
 }
 
 void ViEReceiver::GetReceiveBandwidthEstimatorStats(
