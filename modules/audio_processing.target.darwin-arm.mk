@@ -42,6 +42,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_processing/level_estimator_impl.cc \
 	third_party/webrtc/modules/audio_processing/noise_suppression_impl.cc \
 	third_party/webrtc/modules/audio_processing/processing_component.cc \
+	third_party/webrtc/modules/audio_processing/rms_level.cc \
 	third_party/webrtc/modules/audio_processing/typing_detection.cc \
 	third_party/webrtc/modules/audio_processing/utility/delay_estimator.c \
 	third_party/webrtc/modules/audio_processing/utility/delay_estimator_wrapper.c \
