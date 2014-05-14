@@ -42,7 +42,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/video_coding/main/source/receiver.cc \
 	third_party/webrtc/modules/video_coding/main/source/rtt_filter.cc \
 	third_party/webrtc/modules/video_coding/main/source/session_info.cc \
-	third_party/webrtc/modules/video_coding/main/source/timestamp_extrapolator.cc \
 	third_party/webrtc/modules/video_coding/main/source/timestamp_map.cc \
 	third_party/webrtc/modules/video_coding/main/source/timing.cc \
 	third_party/webrtc/modules/video_coding/main/source/video_coding_impl.cc \
@@ -74,7 +73,6 @@ MY_CFLAGS_Debug := \
 	-fno-builtin-sinf \
 	-m64 \
 	-march=x86-64 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -178,7 +176,6 @@ MY_CFLAGS_Release := \
 	-fno-builtin-sinf \
 	-m64 \
 	-march=x86-64 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \

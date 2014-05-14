@@ -24,8 +24,7 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/modules/remote_bitrate_estimator/rate_statistics.cc \
-	third_party/webrtc/modules/remote_bitrate_estimator/rtp_to_ntp.cc
+	third_party/webrtc/modules/remote_bitrate_estimator/rate_statistics.cc
 
 
 # Flags passed to both C and C++ files.
@@ -52,7 +51,6 @@ MY_CFLAGS_Debug := \
 	-mfpmath=sse \
 	-mmmx \
 	-m32 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -154,7 +152,6 @@ MY_CFLAGS_Release := \
 	-mfpmath=sse \
 	-mmmx \
 	-m32 \
-	-fuse-ld=gold \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
