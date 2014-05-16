@@ -12,7 +12,6 @@
 #include <deque>
 #include <map>
 
-#include "gflags/gflags.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 #include "webrtc/call.h"
@@ -33,11 +32,10 @@
 #include "webrtc/test/testsupport/fileutils.h"
 #include "webrtc/typedefs.h"
 
-DEFINE_int32(seconds, 10, "Seconds to run each clip.");
-
 namespace webrtc {
 
 static const uint32_t kSendSsrc = 0x654321;
+static const int kFullStackTestDurationSecs = 10;
 
 struct FullStackTestParams {
   const char* test_label;
@@ -113,7 +111,8 @@ class VideoAnalyzer : public PacketReceiver,
 
   virtual void SetReceiver(PacketReceiver* receiver) { receiver_ = receiver; }
 
-  virtual bool DeliverPacket(const uint8_t* packet, size_t length) OVERRIDE {
+  virtual DeliveryStatus DeliverPacket(const uint8_t* packet,
+                                       size_t length) OVERRIDE {
     scoped_ptr<RtpHeaderParser> parser(RtpHeaderParser::Create());
     RTPHeader header;
     parser->Parse(packet, static_cast<int>(length), &header);
@@ -391,7 +390,7 @@ TEST_P(FullStackTest, NoPacketLoss) {
                          params.test_label,
                          params.avg_psnr_threshold,
                          params.avg_ssim_threshold,
-                         FLAGS_seconds * params.clip.fps);
+                         kFullStackTestDurationSecs * params.clip.fps);
 
   Call::Config call_config(&analyzer);
 
