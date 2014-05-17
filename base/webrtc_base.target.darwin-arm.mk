@@ -113,6 +113,12 @@ MY_CFLAGS_Debug := \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
 	-fno-tree-sra \
+	-fno-partial-inlining \
+	-fno-early-inlining \
+	-fno-tree-copy-prop \
+	-fno-tree-loop-optimize \
+	-fno-move-loop-invariants \
+	-fno-caller-saves \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \
@@ -229,6 +235,12 @@ MY_CFLAGS_Release := \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
 	-fno-tree-sra \
+	-fno-partial-inlining \
+	-fno-early-inlining \
+	-fno-tree-copy-prop \
+	-fno-tree-loop-optimize \
+	-fno-move-loop-invariants \
+	-fno-caller-saves \
 	-Wno-psabi \
 	-ffunction-sections \
 	-funwind-tables \
