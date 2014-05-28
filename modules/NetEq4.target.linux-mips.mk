@@ -72,7 +72,6 @@ MY_CFLAGS_Debug := \
 	-fvisibility=hidden \
 	-pipe \
 	-fPIC \
-	-Wno-unused-local-typedefs \
 	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
@@ -201,7 +200,6 @@ MY_CFLAGS_Release := \
 	-fvisibility=hidden \
 	-pipe \
 	-fPIC \
-	-Wno-unused-local-typedefs \
 	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
