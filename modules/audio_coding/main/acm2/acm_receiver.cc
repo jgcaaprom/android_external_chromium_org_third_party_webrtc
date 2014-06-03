@@ -473,6 +473,12 @@ int AcmReceiver::GetAudio(int desired_freq_hz, AudioFrame* audio_frame) {
   SetAudioFrameActivityAndType(vad_enabled_, type, audio_frame);
   previous_audio_activity_ = audio_frame->vad_activity_;
   call_stats_.DecodedByNetEq(audio_frame->speech_type_);
+
+  // Computes the RTP timestamp of the first sample in |audio_frame| from
+  // |PlayoutTimestamp|, which is the timestamp of the last sample of
+  // |audio_frame|.
+  audio_frame->timestamp_ =
+      PlayoutTimestamp() - audio_frame->samples_per_channel_;
   return 0;
 }
 
@@ -793,7 +799,6 @@ bool AcmReceiver::GetSilence(int desired_sample_rate_hz, AudioFrame* frame) {
   frame->samples_per_channel_ = frame->sample_rate_hz_ / 100;  // Always 10 ms.
   frame->speech_type_ = AudioFrame::kCNG;
   frame->vad_activity_ = AudioFrame::kVadPassive;
-  frame->energy_ = 0;
   int samples = frame->samples_per_channel_ * frame->num_channels_;
   memset(frame->data_, 0, samples * sizeof(int16_t));
   return true;

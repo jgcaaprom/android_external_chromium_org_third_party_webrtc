@@ -1229,15 +1229,6 @@ TEST_F(ApmTest, LevelEstimator) {
   EXPECT_EQ(apm_->kNoError, apm_->ProcessStream(frame_));
   EXPECT_EQ(70, apm_->level_estimator()->RMS());
 
-  // Min value if energy_ == 0.
-  SetFrameTo(frame_, 10000);
-  uint32_t energy = frame_->energy_;  // Save default to restore below.
-  frame_->energy_ = 0;
-  EXPECT_EQ(apm_->kNoError, apm_->ProcessStream(frame_));
-  EXPECT_EQ(apm_->kNoError, apm_->ProcessStream(frame_));
-  EXPECT_EQ(127, apm_->level_estimator()->RMS());
-  frame_->energy_ = energy;
-
   // Verify reset after enable/disable.
   SetFrameTo(frame_, 32767);
   EXPECT_EQ(apm_->kNoError, apm_->ProcessStream(frame_));
@@ -2175,7 +2166,7 @@ class AudioProcessingTest
   double expected_snr_;
 };
 
-TEST_P(AudioProcessingTest, Formats) {
+TEST_P(AudioProcessingTest, DISABLED_ON_ANDROID(Formats)) {
   struct ChannelFormat {
     int num_input;
     int num_output;

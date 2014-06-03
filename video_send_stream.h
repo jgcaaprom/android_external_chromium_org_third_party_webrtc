@@ -29,7 +29,6 @@ class VideoSendStreamInput {
   // These methods do not lock internally and must be called sequentially.
   // If your application switches input sources synchronization must be done
   // externally to make sure that any old frames are not delivered concurrently.
-  virtual void PutFrame(const I420VideoFrame& video_frame) = 0;
   virtual void SwapFrame(I420VideoFrame* video_frame) = 0;
 
  protected:
@@ -64,9 +63,13 @@ class VideoSendStream {
           target_delay_ms(0),
           pacing(false),
           suspend_below_min_bitrate(false) {}
+    std::string ToString() const;
+
     struct EncoderSettings {
       EncoderSettings()
           : payload_type(-1), encoder(NULL), encoder_settings(NULL) {}
+      std::string ToString() const;
+
       std::string payload_name;
       int payload_type;
 
@@ -87,6 +90,7 @@ class VideoSendStream {
       Rtp()
           : max_packet_size(kDefaultMaxPacketSize),
             min_transmit_bitrate_bps(0) {}
+      std::string ToString() const;
 
       std::vector<uint32_t> ssrcs;
 
@@ -111,6 +115,7 @@ class VideoSendStream {
       // details.
       struct Rtx {
         Rtx() : payload_type(0) {}
+        std::string ToString() const;
         // SSRCs to use for the RTX streams.
         std::vector<uint32_t> ssrcs;
 
@@ -136,7 +141,7 @@ class VideoSendStream {
 
     // Expected delay needed by the renderer, i.e. the frame will be delivered
     // this many milliseconds, if possible, earlier than expected render time.
-    // Only valid if |renderer| is set.
+    // Only valid if |local_renderer| is set.
     int render_delay_ms;
 
     // Target delay in milliseconds. A positive value indicates this stream is

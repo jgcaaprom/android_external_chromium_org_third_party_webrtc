@@ -258,7 +258,8 @@ TEST_F(CallPerfTest, PlaysOutAudioAndVideoInSync) {
         : channel_(channel),
           voe_network_(voe_network),
           parser_(RtpHeaderParser::Create()) {}
-    virtual bool DeliverPacket(const uint8_t* packet, size_t length) {
+    virtual DeliveryStatus DeliverPacket(const uint8_t* packet,
+                                         size_t length) OVERRIDE {
       int ret;
       if (parser_->IsRtcp(packet, static_cast<int>(length))) {
         ret = voe_network_->ReceivedRTCPPacket(
@@ -267,7 +268,7 @@ TEST_F(CallPerfTest, PlaysOutAudioAndVideoInSync) {
         ret = voe_network_->ReceivedRTPPacket(
             channel_, packet, static_cast<unsigned int>(length), PacketTime());
       }
-      return ret == 0;
+      return ret == 0 ? DELIVERY_OK : DELIVERY_PACKET_ERROR;
     }
 
    private:
@@ -515,7 +516,9 @@ void CallPerfTest::TestCaptureNtpTime(const FakeNetworkPipe::Config& net_config,
   receiver_call->DestroyVideoReceiveStream(receive_stream);
 }
 
-TEST_F(CallPerfTest, CaptureNtpTimeWithNetworkDelay) {
+// Disabled due to being flaky, see issue 3374:
+// https://code.google.com/p/webrtc/issues/detail?id=3374
+TEST_F(CallPerfTest, DISABLED_CaptureNtpTimeWithNetworkDelay) {
   FakeNetworkPipe::Config net_config;
   net_config.queue_delay_ms = 100;
   // TODO(wu): lower the threshold as the calculation/estimatation becomes more
@@ -589,7 +592,8 @@ void CallPerfTest::TestMinTransmitBitrate(bool pad_to_min_bitrate) {
     }
 
    private:
-    virtual bool DeliverPacket(const uint8_t* packet, size_t length) OVERRIDE {
+    virtual DeliveryStatus DeliverPacket(const uint8_t* packet,
+                                         size_t length) OVERRIDE {
       VideoSendStream::Stats stats = send_stream_->GetStats();
       if (stats.substreams.size() > 0) {
         assert(stats.substreams.size() == 1);

@@ -42,6 +42,7 @@ class CriticalSectionWrapper;
 class FileWrapper;
 class ProcessThread;
 class ReceiveStatistics;
+class RemoteNtpTimeEstimator;
 class RtpDump;
 class RTPPayloadRegistry;
 class RtpReceiver;
@@ -227,8 +228,6 @@ public:
     int StopPlayingFileLocally();
     int IsPlayingFileLocally() const;
     int RegisterFilePlayingToMixer();
-    int ScaleLocalFilePlayout(float scale);
-    int GetLocalPlayoutPosition(int& positionMs);
     int StartPlayingFileAsMicrophone(const char* fileName, bool loop,
                                      FileFormats format,
                                      int startPosition,
@@ -243,7 +242,6 @@ public:
                                      const CodecInst* codecInst);
     int StopPlayingFileAsMicrophone();
     int IsPlayingFileAsMicrophone() const;
-    int ScaleFileAsMicrophonePlayout(float scale);
     int StartRecordingPlayout(const char* fileName, const CodecInst* codecInst);
     int StartRecordingPlayout(OutStream* stream, const CodecInst* codecInst);
     int StopRecordingPlayout();
@@ -311,14 +309,11 @@ public:
 #endif
 
     // VoERTP_RTCP
-    int RegisterRTPObserver(VoERTPObserver& observer);
-    int DeRegisterRTPObserver();
     int RegisterRTCPObserver(VoERTCPObserver& observer);
     int DeRegisterRTCPObserver();
     int SetLocalSSRC(unsigned int ssrc);
     int GetLocalSSRC(unsigned int& ssrc);
     int GetRemoteSSRC(unsigned int& ssrc);
-    int GetRemoteCSRCs(unsigned int arrCSRC[15]);
     int SetSendAudioLevelIndicationStatus(bool enable, unsigned char id);
     int SetReceiveAudioLevelIndicationStatus(bool enable, unsigned char id);
     int SetSendAbsoluteSenderTimeStatus(bool enable, unsigned char id);
@@ -338,7 +333,6 @@ public:
     int GetRTPStatistics(unsigned int& averageJitterMs,
                          unsigned int& maxJitterMs,
                          unsigned int& discardedPackets);
-    int GetRemoteRTCPSenderInfo(SenderInfo* sender_info);
     int GetRemoteRTCPReportBlocks(std::vector<ReportBlock>* report_blocks);
     int GetRTPStatistics(CallStatistics& stats);
     int SetFECStatus(bool enable, int redPayloadtype);
@@ -347,7 +341,6 @@ public:
     int StartRTPDump(const char fileNameUTF8[1024], RTPDirections direction);
     int StopRTPDump(RTPDirections direction);
     bool RTPDumpIsActive(RTPDirections direction);
-    uint32_t LastRemoteTimeStamp() { return _lastRemoteTimeStamp; }
     // Takes ownership of the ViENetwork.
     void SetVideoEngineBWETarget(ViENetwork* vie_network, int video_channel);
 
@@ -539,6 +532,8 @@ private:
     uint32_t _timeStamp;
     uint8_t _sendTelephoneEventPayloadType;
 
+    scoped_ptr<RemoteNtpTimeEstimator> ntp_estimator_;
+
     // Timestamp of the audio pulled from NetEq.
     uint32_t jitter_buffer_playout_timestamp_;
     uint32_t playout_timestamp_rtp_;
@@ -547,6 +542,15 @@ private:
     uint32_t _numberOfDiscardedPackets;
     uint16_t send_sequence_number_;
     uint8_t restored_packet_[kVoiceEngineMaxIpPacketSizeBytes];
+
+    scoped_ptr<CriticalSectionWrapper> ts_stats_lock_;
+
+    bool first_frame_arrived_;
+    // The rtp timestamp of the first played out audio frame.
+    uint32_t capture_start_rtp_time_stamp_;
+    // The capture ntp time (in local timebase) of the first played out audio
+    // frame.
+    int64_t capture_start_ntp_time_ms_;
 
     // uses
     Statistics* _engineStatisticsPtr;
@@ -562,13 +566,11 @@ private:
     VoERxVadCallback* _rxVadObserverPtr;
     int32_t _oldVadDecision;
     int32_t _sendFrameType; // Send data is voice, 1-voice, 0-otherwise
-    VoERTPObserver* _rtpObserverPtr;
     VoERTCPObserver* _rtcpObserverPtr;
     // VoEBase
     bool _externalPlayout;
     bool _externalMixing;
     bool _mixFileWithMicrophone;
-    bool _rtpObserver;
     bool _rtcpObserver;
     // VoEVolumeControl
     bool _mute;
@@ -580,7 +582,6 @@ private:
     bool _playInbandDtmfEvent;
     // VoeRTP_RTCP
     uint32_t _lastLocalTimeStamp;
-    uint32_t _lastRemoteTimeStamp;
     int8_t _lastPayloadType;
     bool _includeAudioLevelIndication;
     // VoENetwork
