@@ -324,6 +324,7 @@ LOCAL_LDFLAGS_Debug := \
 	-fuse-ld=gold \
 	-nostdlib \
 	-Wl,--no-undefined \
+	-Wl,--exclude-libs=ALL \
 	-Wl,--warn-shared-textrel \
 	-Wl,-O1 \
 	-Wl,--as-needed
@@ -339,6 +340,7 @@ LOCAL_LDFLAGS_Release := \
 	-fuse-ld=gold \
 	-nostdlib \
 	-Wl,--no-undefined \
+	-Wl,--exclude-libs=ALL \
 	-Wl,-O1 \
 	-Wl,--as-needed \
 	-Wl,--gc-sections \
