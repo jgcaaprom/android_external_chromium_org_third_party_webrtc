@@ -312,16 +312,14 @@ uint16_t RTPSender::MaxPayloadLength() const {
 
 uint16_t RTPSender::PacketOverHead() const { return packet_over_head_; }
 
-void RTPSender::SetRTXStatus(int mode, bool set_ssrc, uint32_t ssrc) {
+void RTPSender::SetRTXStatus(int mode) {
   CriticalSectionScoped cs(send_critsect_);
   rtx_ = mode;
-  if (rtx_ != kRtxOff) {
-    if (set_ssrc) {
-      ssrc_rtx_ = ssrc;
-    } else {
-      ssrc_rtx_ = ssrc_db_.CreateSSRC();  // Can't be 0.
-    }
-  }
+}
+
+void RTPSender::SetRtxSsrc(uint32_t ssrc) {
+  CriticalSectionScoped cs(send_critsect_);
+  ssrc_rtx_ = ssrc;
 }
 
 void RTPSender::RTXStatus(int* mode, uint32_t* ssrc,
@@ -802,18 +800,9 @@ bool RTPSender::PrepareAndSendPacket(uint8_t* buffer,
 
   int64_t now_ms = clock_->TimeInMilliseconds();
   int64_t diff_ms = now_ms - capture_time_ms;
-  bool updated_transmission_time_offset =
-      UpdateTransmissionTimeOffset(buffer_to_send_ptr, length, rtp_header,
-                                   diff_ms);
-  bool updated_abs_send_time =
-      UpdateAbsoluteSendTime(buffer_to_send_ptr, length, rtp_header, now_ms);
-  if (updated_transmission_time_offset || updated_abs_send_time) {
-    // Update stored packet in case of receiving a re-transmission request.
-    packet_history_.ReplaceRTPHeader(buffer_to_send_ptr,
-                                     rtp_header.sequenceNumber,
-                                     rtp_header.headerLength);
-  }
-
+  UpdateTransmissionTimeOffset(buffer_to_send_ptr, length, rtp_header,
+                               diff_ms);
+  UpdateAbsoluteSendTime(buffer_to_send_ptr, length, rtp_header, now_ms);
   bool ret = SendPacketToNetwork(buffer_to_send_ptr, length);
   UpdateRtpStats(buffer_to_send_ptr, length, rtp_header, send_over_rtx,
                  is_retransmit);
@@ -1230,7 +1219,7 @@ uint8_t RTPSender::BuildAbsoluteSendTimeExtension(uint8_t* data_buffer) const {
   return kAbsoluteSendTimeLength;
 }
 
-bool RTPSender::UpdateTransmissionTimeOffset(
+void RTPSender::UpdateTransmissionTimeOffset(
     uint8_t *rtp_packet, const uint16_t rtp_packet_length,
     const RTPHeader &rtp_header, const int64_t time_diff_ms) const {
   CriticalSectionScoped cs(send_critsect_);
@@ -1239,7 +1228,7 @@ bool RTPSender::UpdateTransmissionTimeOffset(
   if (rtp_header_extension_map_.GetId(kRtpExtensionTransmissionTimeOffset,
                                       &id) != 0) {
     // Not registered.
-    return false;
+    return;
   }
   // Get length until start of header extension block.
   int extension_block_pos =
@@ -1248,7 +1237,7 @@ bool RTPSender::UpdateTransmissionTimeOffset(
   if (extension_block_pos < 0) {
     LOG(LS_WARNING)
         << "Failed to update transmission time offset, not registered.";
-    return false;
+    return;
   }
   int block_pos = 12 + rtp_header.numCSRCs + extension_block_pos;
   if (rtp_packet_length < block_pos + kTransmissionTimeOffsetLength ||
@@ -1256,25 +1245,24 @@ bool RTPSender::UpdateTransmissionTimeOffset(
           block_pos + kTransmissionTimeOffsetLength) {
     LOG(LS_WARNING)
         << "Failed to update transmission time offset, invalid length.";
-    return false;
+    return;
   }
   // Verify that header contains extension.
   if (!((rtp_packet[12 + rtp_header.numCSRCs] == 0xBE) &&
         (rtp_packet[12 + rtp_header.numCSRCs + 1] == 0xDE))) {
     LOG(LS_WARNING) << "Failed to update transmission time offset, hdr "
                        "extension not found.";
-    return false;
+    return;
   }
   // Verify first byte in block.
   const uint8_t first_block_byte = (id << 4) + 2;
   if (rtp_packet[block_pos] != first_block_byte) {
     LOG(LS_WARNING) << "Failed to update transmission time offset.";
-    return false;
+    return;
   }
   // Update transmission offset field (converting to a 90 kHz timestamp).
   ModuleRTPUtility::AssignUWord24ToBuffer(rtp_packet + block_pos + 1,
                                           time_diff_ms * 90);  // RTP timestamp.
-  return true;
 }
 
 bool RTPSender::UpdateAudioLevel(uint8_t *rtp_packet,
@@ -1320,7 +1308,7 @@ bool RTPSender::UpdateAudioLevel(uint8_t *rtp_packet,
   return true;
 }
 
-bool RTPSender::UpdateAbsoluteSendTime(
+void RTPSender::UpdateAbsoluteSendTime(
     uint8_t *rtp_packet, const uint16_t rtp_packet_length,
     const RTPHeader &rtp_header, const int64_t now_ms) const {
   CriticalSectionScoped cs(send_critsect_);
@@ -1330,7 +1318,7 @@ bool RTPSender::UpdateAbsoluteSendTime(
   if (rtp_header_extension_map_.GetId(kRtpExtensionAbsoluteSendTime,
                                       &id) != 0) {
     // Not registered.
-    return false;
+    return;
   }
   // Get length until start of header extension block.
   int extension_block_pos =
@@ -1338,32 +1326,31 @@ bool RTPSender::UpdateAbsoluteSendTime(
           kRtpExtensionAbsoluteSendTime);
   if (extension_block_pos < 0) {
     // The feature is not enabled.
-    return false;
+    return;
   }
   int block_pos = 12 + rtp_header.numCSRCs + extension_block_pos;
   if (rtp_packet_length < block_pos + kAbsoluteSendTimeLength ||
       rtp_header.headerLength < block_pos + kAbsoluteSendTimeLength) {
     LOG(LS_WARNING) << "Failed to update absolute send time, invalid length.";
-    return false;
+    return;
   }
   // Verify that header contains extension.
   if (!((rtp_packet[12 + rtp_header.numCSRCs] == 0xBE) &&
         (rtp_packet[12 + rtp_header.numCSRCs + 1] == 0xDE))) {
     LOG(LS_WARNING)
         << "Failed to update absolute send time, hdr extension not found.";
-    return false;
+    return;
   }
   // Verify first byte in block.
   const uint8_t first_block_byte = (id << 4) + 2;
   if (rtp_packet[block_pos] != first_block_byte) {
     LOG(LS_WARNING) << "Failed to update absolute send time.";
-    return false;
+    return;
   }
   // Update absolute send time field (convert ms to 24-bit unsigned with 18 bit
   // fractional part).
   ModuleRTPUtility::AssignUWord24ToBuffer(rtp_packet + block_pos + 1,
                                           ((now_ms << 18) / 1000) & 0x00ffffff);
-  return true;
 }
 
 void RTPSender::SetSendingStatus(bool enabled) {

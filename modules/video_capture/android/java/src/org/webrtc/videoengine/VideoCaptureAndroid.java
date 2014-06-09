@@ -66,10 +66,6 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
     this.native_capturer = native_capturer;
     this.info = new Camera.CameraInfo();
     Camera.getCameraInfo(id, info);
-    Exchanger<Handler> handlerExchanger = new Exchanger<Handler>();
-    cameraThread = new CameraThread(handlerExchanger);
-    cameraThread.start();
-    cameraThreadHandler = exchange(handlerExchanger, null);
   }
 
   private class CameraThread extends Thread {
@@ -93,6 +89,14 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
   private synchronized boolean startCapture(
       final int width, final int height,
       final int min_mfps, final int max_mfps) {
+    if (cameraThread != null || cameraThreadHandler != null) {
+      throw new RuntimeException("Camera thread already started!");
+    }
+    Exchanger<Handler> handlerExchanger = new Exchanger<Handler>();
+    cameraThread = new CameraThread(handlerExchanger);
+    cameraThread.start();
+    cameraThreadHandler = exchange(handlerExchanger, null);
+
     final Exchanger<Boolean> result = new Exchanger<Boolean>();
     cameraThreadHandler.post(new Runnable() {
         @Override public void run() {
@@ -174,12 +178,21 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
           stopCaptureOnCameraThread(result);
         }
       });
-    return exchange(result, false);  // |false| is a dummy value here.
+    boolean status = exchange(result, false);  // |false| is a dummy value here.
+    try {
+      cameraThread.join();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    cameraThreadHandler = null;
+    cameraThread = null;
+    return status;
   }
 
   private void stopCaptureOnCameraThread(
       Exchanger<Boolean> result) {
     Log.d(TAG, "stopCapture");
+    Looper.myLooper().quit();
     if (camera == null) {
       throw new RuntimeException("Camera is already stopped!");
     }
@@ -210,7 +223,12 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
   private native void ProvideCameraFrame(
       byte[] data, int length, long captureObject);
 
-  public synchronized void onPreviewFrame(byte[] data, Camera callbackCamera) {
+  // Called on cameraThread so must not "synchronized".
+  @Override
+  public void onPreviewFrame(byte[] data, Camera callbackCamera) {
+    if (Thread.currentThread() != cameraThread) {
+      throw new RuntimeException("Camera callback not on camera thread?!?");
+    }
     if (camera == null) {
       return;
     }
@@ -225,19 +243,24 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
   // Does not affect the captured video image.
   // Called by native code.
   private synchronized void setPreviewRotation(final int rotation) {
-    cameraThreadHandler.post(new Runnable() {
-        @Override public void run() {
-          setPreviewRotationOnCameraThread(rotation);
-        }
-      });
-  }
-
-  private void setPreviewRotationOnCameraThread(int rotation) {
-    Log.v(TAG, "setPreviewRotation:" + rotation);
-
-    if (camera == null) {
+    if (camera == null || cameraThreadHandler == null) {
       return;
     }
+    final Exchanger<IOException> result = new Exchanger<IOException>();
+    cameraThreadHandler.post(new Runnable() {
+        @Override public void run() {
+          setPreviewRotationOnCameraThread(rotation, result);
+        }
+      });
+    // Use the exchanger below to block this function until
+    // setPreviewRotationOnCameraThread() completes, holding the synchronized
+    // lock for the duration.  The exchanged value itself is ignored.
+    exchange(result, null);
+  }
+
+  private void setPreviewRotationOnCameraThread(
+      int rotation, Exchanger<IOException> result) {
+    Log.v(TAG, "setPreviewRotation:" + rotation);
 
     int resultRotation = 0;
     if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
@@ -249,17 +272,20 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
       resultRotation = rotation;
     }
     camera.setDisplayOrientation(resultRotation);
+    exchange(result, null);
   }
 
+  @Override
   public synchronized void surfaceChanged(
       SurfaceHolder holder, int format, int width, int height) {
     Log.d(TAG, "VideoCaptureAndroid::surfaceChanged ignored: " +
         format + ": " + width + "x" + height);
   }
 
+  @Override
   public synchronized void surfaceCreated(final SurfaceHolder holder) {
     Log.d(TAG, "VideoCaptureAndroid::surfaceCreated");
-    if (camera == null) {
+    if (camera == null || cameraThreadHandler == null) {
       return;
     }
     final Exchanger<IOException> result = new Exchanger<IOException>();
@@ -274,9 +300,10 @@ public class VideoCaptureAndroid implements PreviewCallback, Callback {
     }
   }
 
+  @Override
   public synchronized void surfaceDestroyed(SurfaceHolder holder) {
     Log.d(TAG, "VideoCaptureAndroid::surfaceDestroyed");
-    if (camera == null) {
+    if (camera == null || cameraThreadHandler == null) {
       return;
     }
     final Exchanger<IOException> result = new Exchanger<IOException>();

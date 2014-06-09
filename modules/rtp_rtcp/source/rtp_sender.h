@@ -158,19 +158,11 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   uint8_t BuildAudioLevelExtension(uint8_t* data_buffer) const;
   uint8_t BuildAbsoluteSendTimeExtension(uint8_t* data_buffer) const;
 
-  bool UpdateTransmissionTimeOffset(uint8_t *rtp_packet,
-                                    const uint16_t rtp_packet_length,
-                                    const RTPHeader &rtp_header,
-                                    const int64_t time_diff_ms) const;
   bool UpdateAudioLevel(uint8_t *rtp_packet,
                         const uint16_t rtp_packet_length,
                         const RTPHeader &rtp_header,
                         const bool is_voiced,
                         const uint8_t dBov) const;
-  bool UpdateAbsoluteSendTime(uint8_t *rtp_packet,
-                              const uint16_t rtp_packet_length,
-                              const RTPHeader &rtp_header,
-                              const int64_t now_ms) const;
 
   bool TimeToSendPacket(uint16_t sequence_number, int64_t capture_time_ms,
                         bool retransmission);
@@ -192,9 +184,11 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   bool ProcessNACKBitRate(const uint32_t now);
 
   // RTX.
-  void SetRTXStatus(int mode, bool set_ssrc, uint32_t ssrc);
+  void SetRTXStatus(int mode);
 
   void RTXStatus(int* mode, uint32_t* ssrc, int* payload_type) const;
+
+  void SetRtxSsrc(uint32_t ssrc);
 
   void SetRtxPayloadType(int payloadType);
 
@@ -318,6 +312,15 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   bool SendPacketToNetwork(const uint8_t *packet, uint32_t size);
 
   void UpdateDelayStatistics(int64_t capture_time_ms, int64_t now_ms);
+
+  void UpdateTransmissionTimeOffset(uint8_t *rtp_packet,
+                                    const uint16_t rtp_packet_length,
+                                    const RTPHeader &rtp_header,
+                                    const int64_t time_diff_ms) const;
+  void UpdateAbsoluteSendTime(uint8_t *rtp_packet,
+                              const uint16_t rtp_packet_length,
+                              const RTPHeader &rtp_header,
+                              const int64_t now_ms) const;
 
   void UpdateRtpStats(const uint8_t* buffer,
                       uint32_t size,

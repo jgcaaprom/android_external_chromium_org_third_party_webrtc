@@ -116,7 +116,7 @@ static int TimestampLessThan(uint32_t t1, uint32_t t2) {
 
 AudioCodingModuleImpl::AudioCodingModuleImpl(
     const AudioCodingModule::Config& config)
-    : packetization_callback_(NULL),
+    : acm_crit_sect_(CriticalSectionWrapper::CreateCriticalSection()),
       id_(config.id),
       expected_codec_ts_(0xD87F3F9F),
       expected_in_ts_(0xD87F3F9F),
@@ -133,8 +133,6 @@ AudioCodingModuleImpl::AudioCodingModuleImpl(
       current_send_codec_idx_(-1),
       send_codec_registered_(false),
       receiver_(config),
-      acm_crit_sect_(CriticalSectionWrapper::CreateCriticalSection()),
-      vad_callback_(NULL),
       is_first_red_(true),
       red_enabled_(false),
       last_red_timestamp_(0),
@@ -142,10 +140,12 @@ AudioCodingModuleImpl::AudioCodingModuleImpl(
       previous_pltype_(255),
       aux_rtp_header_(NULL),
       receiver_initialized_(false),
-      callback_crit_sect_(CriticalSectionWrapper::CreateCriticalSection()),
       secondary_send_codec_inst_(),
       codec_timestamp_(expected_codec_ts_),
-      first_10ms_data_(false) {
+      first_10ms_data_(false),
+      callback_crit_sect_(CriticalSectionWrapper::CreateCriticalSection()),
+      packetization_callback_(NULL),
+      vad_callback_(NULL) {
 
   // Nullify send codec memory, set payload type and set codec name to
   // invalid values.
@@ -1776,7 +1776,6 @@ int AudioCodingModuleImpl::PlayoutData10Ms(int desired_freq_hz,
   }
 
   audio_frame->id_ = id_;
-  audio_frame->timestamp_ = 0;
   return 0;
 }
 
@@ -1917,8 +1916,7 @@ int AudioCodingModuleImpl::ConfigISACBandwidthEstimator(
 }
 
 int AudioCodingModuleImpl::PlayoutTimestamp(uint32_t* timestamp) {
-  *timestamp = receiver_.PlayoutTimestamp();
-  return 0;
+  return receiver_.GetPlayoutTimestamp(timestamp) ? 0 : -1;
 }
 
 bool AudioCodingModuleImpl::HaveValidEncoder(const char* caller_name) const {
