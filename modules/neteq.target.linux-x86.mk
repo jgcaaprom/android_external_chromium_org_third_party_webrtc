@@ -3,7 +3,7 @@
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-LOCAL_MODULE := third_party_webrtc_modules_NetEq4_gyp
+LOCAL_MODULE := third_party_webrtc_modules_neteq_gyp
 LOCAL_MODULE_SUFFIX := .a
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_TARGET_ARCH := $(TARGET_$(GYP_VAR_PREFIX)ARCH)
@@ -24,46 +24,45 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/modules/audio_coding/neteq4/accelerate.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/audio_classifier.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/audio_decoder_impl.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/audio_decoder.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/audio_multi_vector.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/audio_vector.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/background_noise.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/buffer_level_filter.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/comfort_noise.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/decision_logic.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/decision_logic_fax.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/decision_logic_normal.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/decoder_database.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/delay_manager.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/delay_peak_detector.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/dsp_helper.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/dtmf_buffer.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/dtmf_tone_generator.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/expand.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/merge.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/neteq_impl.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/neteq.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/statistics_calculator.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/normal.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/packet_buffer.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/payload_splitter.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/post_decode_vad.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/preemptive_expand.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/random_vector.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/rtcp.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/sync_buffer.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/timestamp_scaler.cc \
-	third_party/webrtc/modules/audio_coding/neteq4/time_stretch.cc
+	third_party/webrtc/modules/audio_coding/neteq/accelerate.cc \
+	third_party/webrtc/modules/audio_coding/neteq/audio_classifier.cc \
+	third_party/webrtc/modules/audio_coding/neteq/audio_decoder_impl.cc \
+	third_party/webrtc/modules/audio_coding/neteq/audio_decoder.cc \
+	third_party/webrtc/modules/audio_coding/neteq/audio_multi_vector.cc \
+	third_party/webrtc/modules/audio_coding/neteq/audio_vector.cc \
+	third_party/webrtc/modules/audio_coding/neteq/background_noise.cc \
+	third_party/webrtc/modules/audio_coding/neteq/buffer_level_filter.cc \
+	third_party/webrtc/modules/audio_coding/neteq/comfort_noise.cc \
+	third_party/webrtc/modules/audio_coding/neteq/decision_logic.cc \
+	third_party/webrtc/modules/audio_coding/neteq/decision_logic_fax.cc \
+	third_party/webrtc/modules/audio_coding/neteq/decision_logic_normal.cc \
+	third_party/webrtc/modules/audio_coding/neteq/decoder_database.cc \
+	third_party/webrtc/modules/audio_coding/neteq/delay_manager.cc \
+	third_party/webrtc/modules/audio_coding/neteq/delay_peak_detector.cc \
+	third_party/webrtc/modules/audio_coding/neteq/dsp_helper.cc \
+	third_party/webrtc/modules/audio_coding/neteq/dtmf_buffer.cc \
+	third_party/webrtc/modules/audio_coding/neteq/dtmf_tone_generator.cc \
+	third_party/webrtc/modules/audio_coding/neteq/expand.cc \
+	third_party/webrtc/modules/audio_coding/neteq/merge.cc \
+	third_party/webrtc/modules/audio_coding/neteq/neteq_impl.cc \
+	third_party/webrtc/modules/audio_coding/neteq/neteq.cc \
+	third_party/webrtc/modules/audio_coding/neteq/statistics_calculator.cc \
+	third_party/webrtc/modules/audio_coding/neteq/normal.cc \
+	third_party/webrtc/modules/audio_coding/neteq/packet_buffer.cc \
+	third_party/webrtc/modules/audio_coding/neteq/payload_splitter.cc \
+	third_party/webrtc/modules/audio_coding/neteq/post_decode_vad.cc \
+	third_party/webrtc/modules/audio_coding/neteq/preemptive_expand.cc \
+	third_party/webrtc/modules/audio_coding/neteq/random_vector.cc \
+	third_party/webrtc/modules/audio_coding/neteq/rtcp.cc \
+	third_party/webrtc/modules/audio_coding/neteq/sync_buffer.cc \
+	third_party/webrtc/modules/audio_coding/neteq/timestamp_scaler.cc \
+	third_party/webrtc/modules/audio_coding/neteq/time_stretch.cc
 
 
 # Flags passed to both C and C++ files.
 MY_CFLAGS_Debug := \
-	-fstack-protector \
 	--param=ssp-buffer-size=4 \
-	 \
+	-Werror \
 	-fno-exceptions \
 	-fno-strict-aliasing \
 	-Wall \
@@ -73,22 +72,21 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-EL \
-	-mhard-float \
+	-msse2 \
+	-mfpmath=sse \
+	-mmmx \
+	-m32 \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
-	-fstack-protector \
 	-fno-short-enums \
 	-finline-limit=64 \
 	-Wa,--noexecstack \
@@ -97,6 +95,7 @@ MY_CFLAGS_Debug := \
 	-Wno-ignored-qualifiers \
 	-Wno-type-limits \
 	-Wno-unused-but-set-variable \
+	-fno-stack-protector \
 	-Os \
 	-g \
 	-fomit-frame-pointer \
@@ -131,8 +130,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -154,6 +151,7 @@ MY_DEFS_Debug := \
 
 # Include paths placed before CFLAGS/CPPFLAGS
 LOCAL_C_INCLUDES_Debug := \
+	$(gyp_shared_intermediate_dir) \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
@@ -183,16 +181,14 @@ LOCAL_CPPFLAGS_Debug := \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
 	-Wsign-compare \
-	-Wno-uninitialized \
 	-Wno-non-virtual-dtor \
 	-Wno-sign-promo
 
 
 # Flags passed to both C and C++ files.
 MY_CFLAGS_Release := \
-	-fstack-protector \
 	--param=ssp-buffer-size=4 \
-	 \
+	-Werror \
 	-fno-exceptions \
 	-fno-strict-aliasing \
 	-Wall \
@@ -202,22 +198,21 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-EL \
-	-mhard-float \
+	-msse2 \
+	-mfpmath=sse \
+	-mmmx \
+	-m32 \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
-	-fstack-protector \
 	-fno-short-enums \
 	-finline-limit=64 \
 	-Wa,--noexecstack \
@@ -226,6 +221,7 @@ MY_CFLAGS_Release := \
 	-Wno-ignored-qualifiers \
 	-Wno-type-limits \
 	-Wno-unused-but-set-variable \
+	-fno-stack-protector \
 	-Os \
 	-fno-ident \
 	-fdata-sections \
@@ -260,8 +256,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -284,6 +278,7 @@ MY_DEFS_Release := \
 
 # Include paths placed before CFLAGS/CPPFLAGS
 LOCAL_C_INCLUDES_Release := \
+	$(gyp_shared_intermediate_dir) \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
@@ -313,7 +308,6 @@ LOCAL_CPPFLAGS_Release := \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
 	-Wsign-compare \
-	-Wno-uninitialized \
 	-Wno-non-virtual-dtor \
 	-Wno-sign-promo
 
@@ -330,8 +324,8 @@ LOCAL_LDFLAGS_Debug := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
-	-EL \
-	-Wl,--no-keep-memory \
+	-m32 \
+	-fuse-ld=gold \
 	-nostdlib \
 	-Wl,--no-undefined \
 	-Wl,--exclude-libs=ALL \
@@ -346,8 +340,8 @@ LOCAL_LDFLAGS_Release := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
-	-EL \
-	-Wl,--no-keep-memory \
+	-m32 \
+	-fuse-ld=gold \
 	-nostdlib \
 	-Wl,--no-undefined \
 	-Wl,--exclude-libs=ALL \
@@ -370,10 +364,10 @@ LOCAL_SHARED_LIBRARIES := \
 
 # Add target alias to "gyp_all_modules" target.
 .PHONY: gyp_all_modules
-gyp_all_modules: third_party_webrtc_modules_NetEq4_gyp
+gyp_all_modules: third_party_webrtc_modules_neteq_gyp
 
 # Alias gyp target name.
-.PHONY: NetEq4
-NetEq4: third_party_webrtc_modules_NetEq4_gyp
+.PHONY: neteq
+neteq: third_party_webrtc_modules_neteq_gyp
 
 include $(BUILD_STATIC_LIBRARY)
