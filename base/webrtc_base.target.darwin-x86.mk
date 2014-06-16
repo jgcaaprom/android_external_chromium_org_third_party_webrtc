@@ -88,6 +88,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/taskparent.cc \
 	third_party/webrtc/base/taskrunner.cc \
 	third_party/webrtc/base/thread.cc \
+	third_party/webrtc/base/thread_checker_impl.cc \
 	third_party/webrtc/base/timeutils.cc \
 	third_party/webrtc/base/timing.cc \
 	third_party/webrtc/base/unixfilesystem.cc \
