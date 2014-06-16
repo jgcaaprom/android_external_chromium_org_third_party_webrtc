@@ -55,8 +55,6 @@
     ((uint32_t) ((uint32_t)(a) * (uint32_t)(b)))
 #define WEBRTC_SPL_UMUL_16_16(a, b) \
     ((uint32_t) (uint16_t)(a) * (uint16_t)(b))
-#define WEBRTC_SPL_UMUL_16_16_RSFT16(a, b) \
-    (((uint32_t) (uint16_t)(a) * (uint16_t)(b)) >> 16)
 #define WEBRTC_SPL_UMUL_32_16(a, b) \
     ((uint32_t) ((uint32_t)(a) * (uint16_t)(b)))
 #define WEBRTC_SPL_UMUL_32_16_RSFT16(a, b) \
@@ -125,7 +123,6 @@
 #define WEBRTC_SPL_RSHIFT_W32(x, c)     ((x) >> (c))
 #define WEBRTC_SPL_LSHIFT_W32(x, c)     ((x) << (c))
 
-#define WEBRTC_SPL_RSHIFT_U16(x, c)     ((uint16_t)(x) >> (c))
 #define WEBRTC_SPL_LSHIFT_U16(x, c)     ((uint16_t)(x) << (c))
 #define WEBRTC_SPL_RSHIFT_U32(x, c)     ((uint32_t)(x) >> (c))
 #define WEBRTC_SPL_LSHIFT_U32(x, c)     ((uint32_t)(x) << (c))
