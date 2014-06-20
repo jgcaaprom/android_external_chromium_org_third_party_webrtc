@@ -18,7 +18,7 @@ extern "C" {
 
 namespace webrtc {
 
-TEST(EchoCancellationInternalTest, DISABLED_ON_ANDROID(DelayCorrection)) {
+TEST(EchoCancellationInternalTest, DelayCorrection) {
   scoped_ptr<AudioProcessing> ap(AudioProcessing::Create(0));
   EXPECT_TRUE(ap->echo_cancellation()->aec_core() == NULL);
 
@@ -46,6 +46,36 @@ TEST(EchoCancellationInternalTest, DISABLED_ON_ANDROID(DelayCorrection)) {
   // Retains setting after initialization.
   EXPECT_EQ(ap->kNoError, ap->Initialize());
   EXPECT_EQ(0, WebRtcAec_delay_correction_enabled(aec_core));
+}
+
+TEST(EchoCancellationInternalTest, ReportedDelay) {
+  scoped_ptr<AudioProcessing> ap(AudioProcessing::Create(0));
+  EXPECT_TRUE(ap->echo_cancellation()->aec_core() == NULL);
+
+  EXPECT_EQ(ap->kNoError, ap->echo_cancellation()->Enable(true));
+  EXPECT_TRUE(ap->echo_cancellation()->is_enabled());
+
+  AecCore* aec_core = ap->echo_cancellation()->aec_core();
+  ASSERT_TRUE(aec_core != NULL);
+  // Enabled by default.
+  EXPECT_EQ(1, WebRtcAec_reported_delay_enabled(aec_core));
+
+  Config config;
+  config.Set<ReportedDelay>(new ReportedDelay(false));
+  ap->SetExtraOptions(config);
+  EXPECT_EQ(0, WebRtcAec_reported_delay_enabled(aec_core));
+
+  // Retains setting after initialization.
+  EXPECT_EQ(ap->kNoError, ap->Initialize());
+  EXPECT_EQ(0, WebRtcAec_reported_delay_enabled(aec_core));
+
+  config.Set<ReportedDelay>(new ReportedDelay(true));
+  ap->SetExtraOptions(config);
+  EXPECT_EQ(1, WebRtcAec_reported_delay_enabled(aec_core));
+
+  // Retains setting after initialization.
+  EXPECT_EQ(ap->kNoError, ap->Initialize());
+  EXPECT_EQ(1, WebRtcAec_reported_delay_enabled(aec_core));
 }
 
 }  // namespace webrtc

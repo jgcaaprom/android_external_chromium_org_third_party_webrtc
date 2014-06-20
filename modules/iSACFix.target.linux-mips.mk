@@ -39,7 +39,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/initialize.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_c.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lpc_masking_model.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lpc_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator.c \
@@ -48,7 +47,9 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_gain_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_lag_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/spectrum_ar_model_tables.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform.c
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/filters_mips.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_mips.c
 
 
 # Flags passed to both C and C++ files.
@@ -106,6 +107,7 @@ MY_DEFS_Debug := \
 	'-DUSE_LIBJPEG_TURBO=1' \
 	'-DENABLE_WEBRTC=1' \
 	'-DUSE_PROPRIETARY_CODECS' \
+	'-DENABLE_BROWSER_CDMS' \
 	'-DENABLE_CONFIGURATION_POLICY' \
 	'-DDISCARDABLE_MEMORY_ALWAYS_SUPPORTED_NATIVELY' \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
@@ -144,6 +146,7 @@ MY_DEFS_Debug := \
 
 # Include paths placed before CFLAGS/CPPFLAGS
 LOCAL_C_INCLUDES_Debug := \
+	$(gyp_shared_intermediate_dir) \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
@@ -224,6 +227,7 @@ MY_DEFS_Release := \
 	'-DUSE_LIBJPEG_TURBO=1' \
 	'-DENABLE_WEBRTC=1' \
 	'-DUSE_PROPRIETARY_CODECS' \
+	'-DENABLE_BROWSER_CDMS' \
 	'-DENABLE_CONFIGURATION_POLICY' \
 	'-DDISCARDABLE_MEMORY_ALWAYS_SUPPORTED_NATIVELY' \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
@@ -263,6 +267,7 @@ MY_DEFS_Release := \
 
 # Include paths placed before CFLAGS/CPPFLAGS
 LOCAL_C_INCLUDES_Release := \
+	$(gyp_shared_intermediate_dir) \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \

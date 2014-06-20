@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <list>
+#include <map>
 
 #include "webrtc/modules/video_coding/utility/include/exp_filter.h"
 #include "webrtc/system_wrappers/interface/clock.h"
@@ -37,7 +38,7 @@ const float kWeightFactorMean = 0.98f;
 const int kQuickRampUpDelayMs = 10 * 1000;
 // Delay between rampup attempts. Initially uses standard, scales up to max.
 const int kStandardRampUpDelayMs = 30 * 1000;
-const int kMaxRampUpDelayMs = 120 * 1000;
+const int kMaxRampUpDelayMs = 240 * 1000;
 // Expontential back-off factor, to prevent annoying up-down behaviour.
 const double kRampUpBackoffFactor = 2.0;
 
@@ -125,7 +126,7 @@ class OveruseFrameDetector::EncodeTimeAvg {
     filtered_encode_time_ms_->Apply(exp, encode_time_ms);
   }
 
-  int filtered_encode_time_ms() const {
+  int Value() const {
     return static_cast<int>(filtered_encode_time_ms_->Value() + 0.5);
   }
 
@@ -174,7 +175,7 @@ class OveruseFrameDetector::EncodeUsage {
     filtered_encode_time_ms_->Apply(exp, encode_time_ms);
   }
 
-  int UsageInPercent() const {
+  int Value() const {
     if (count_ < static_cast<uint32_t>(options_.min_frame_samples)) {
       return static_cast<int>(InitialUsageInPercent() + 0.5f);
     }
@@ -185,6 +186,7 @@ class OveruseFrameDetector::EncodeUsage {
     return static_cast<int>(encode_usage_percent + 0.5);
   }
 
+ private:
   float InitialUsageInPercent() const {
     // Start in between the underuse and overuse threshold.
     return (options_.low_encode_usage_threshold_percent +
@@ -195,7 +197,6 @@ class OveruseFrameDetector::EncodeUsage {
     return InitialUsageInPercent() * kInitialSampleDiffMs / 100;
   }
 
- private:
   const float kWeightFactorFrameDiff;
   const float kWeightFactorEncodeTime;
   const float kInitialSampleDiffMs;
@@ -204,6 +205,111 @@ class OveruseFrameDetector::EncodeUsage {
   CpuOveruseOptions options_;
   scoped_ptr<VCMExpFilter> filtered_encode_time_ms_;
   scoped_ptr<VCMExpFilter> filtered_frame_diff_ms_;
+};
+
+// Class for calculating the relative standard deviation of encode times.
+class OveruseFrameDetector::EncodeTimeRsd {
+ public:
+  EncodeTimeRsd(Clock* clock)
+      : kWeightFactor(0.6f),
+        count_(0),
+        filtered_rsd_(new VCMExpFilter(kWeightFactor)),
+        hist_samples_(0),
+        hist_sum_(0.0f),
+        last_process_time_ms_(clock->TimeInMilliseconds()) {
+    Reset();
+  }
+  ~EncodeTimeRsd() {}
+
+  void SetOptions(const CpuOveruseOptions& options) {
+    options_ = options;
+  }
+
+  void Reset() {
+    count_ = 0;
+    filtered_rsd_->Reset(kWeightFactor);
+    filtered_rsd_->Apply(1.0f, InitialValue());
+    hist_.clear();
+    hist_samples_ = 0;
+    hist_sum_ = 0.0f;
+  }
+
+  void AddEncodeSample(float encode_time_ms) {
+    int bin = static_cast<int>(encode_time_ms + 0.5f);
+    if (bin <= 0) {
+      // The frame was probably not encoded, skip possible dropped frame.
+      return;
+    }
+    ++count_;
+    ++hist_[bin];
+    ++hist_samples_;
+    hist_sum_ += bin;
+  }
+
+  void Process(int64_t now) {
+    if (count_ < static_cast<uint32_t>(options_.min_frame_samples)) {
+      // Have not received min number of frames since last reset.
+      return;
+    }
+    const int kMinHistSamples = 20;
+    if (hist_samples_ < kMinHistSamples) {
+      return;
+    }
+    const int64_t kMinDiffSinceLastProcessMs = 1000;
+    int64_t diff_last_process_ms = now - last_process_time_ms_;
+    if (now - last_process_time_ms_ <= kMinDiffSinceLastProcessMs) {
+      return;
+    }
+    last_process_time_ms_ = now;
+
+    // Calculate variance (using samples above the mean).
+    // Checks for a larger encode time of some frames while there is a small
+    // increase in the average time.
+    int mean = hist_sum_ / hist_samples_;
+    float variance = 0.0f;
+    int total_count = 0;
+    for (std::map<int,int>::iterator it = hist_.begin();
+         it != hist_.end(); ++it) {
+      int time = it->first;
+      int count = it->second;
+      if (time > mean) {
+        total_count += count;
+        for (int i = 0; i < count; ++i) {
+          variance += ((time - mean) * (time - mean));
+        }
+      }
+    }
+    variance /= std::max(total_count, 1);
+    float cov = sqrt(variance) / mean;
+
+    hist_.clear();
+    hist_samples_ = 0;
+    hist_sum_ = 0.0f;
+
+    float exp = static_cast<float>(diff_last_process_ms) / kProcessIntervalMs;
+    exp = std::min(exp, kMaxExp);
+    filtered_rsd_->Apply(exp, 100.0f * cov);
+  }
+
+  int Value() const {
+    return static_cast<int>(filtered_rsd_->Value() + 0.5);
+  }
+
+ private:
+  float InitialValue() const {
+    // Start in between the underuse and overuse threshold.
+    return std::max(((options_.low_encode_time_rsd_threshold +
+                      options_.high_encode_time_rsd_threshold) / 2.0f), 0.0f);
+  }
+
+  const float kWeightFactor;
+  uint32_t count_;  // Number of encode samples since last reset.
+  CpuOveruseOptions options_;
+  scoped_ptr<VCMExpFilter> filtered_rsd_;
+  int hist_samples_;
+  float hist_sum_;
+  std::map<int,int> hist_;  // Histogram of encode time of frames.
+  int64_t last_process_time_ms_;
 };
 
 // Class for calculating the capture queue delay change.
@@ -252,7 +358,7 @@ class OveruseFrameDetector::CaptureQueueDelay {
     return delay_ms_;
   }
 
-  int filtered_delay_ms_per_s() const {
+  int Value() const {
     return static_cast<int>(filtered_delay_ms_per_s_->Value() + 0.5);
   }
 
@@ -278,6 +384,7 @@ OveruseFrameDetector::OveruseFrameDetector(Clock* clock)
       num_pixels_(0),
       last_encode_sample_ms_(0),
       encode_time_(new EncodeTimeAvg()),
+      encode_rsd_(new EncodeTimeRsd(clock)),
       encode_usage_(new EncodeUsage()),
       capture_queue_delay_(new CaptureQueueDelay()) {
 }
@@ -299,6 +406,7 @@ void OveruseFrameDetector::SetOptions(const CpuOveruseOptions& options) {
   options_ = options;
   capture_deltas_.SetOptions(options);
   encode_usage_->SetOptions(options);
+  encode_rsd_->SetOptions(options);
   ResetAll(num_pixels_);
 }
 
@@ -311,10 +419,10 @@ void OveruseFrameDetector::GetCpuOveruseMetrics(
     CpuOveruseMetrics* metrics) const {
   CriticalSectionScoped cs(crit_.get());
   metrics->capture_jitter_ms = static_cast<int>(capture_deltas_.StdDev() + 0.5);
-  metrics->avg_encode_time_ms = encode_time_->filtered_encode_time_ms();
-  metrics->encode_usage_percent = encode_usage_->UsageInPercent();
-  metrics->capture_queue_delay_ms_per_s =
-      capture_queue_delay_->filtered_delay_ms_per_s();
+  metrics->avg_encode_time_ms = encode_time_->Value();
+  metrics->encode_rsd = encode_rsd_->Value();
+  metrics->encode_usage_percent = encode_usage_->Value();
+  metrics->capture_queue_delay_ms_per_s = capture_queue_delay_->Value();
 }
 
 int32_t OveruseFrameDetector::TimeUntilNextProcess() {
@@ -340,6 +448,7 @@ void OveruseFrameDetector::ResetAll(int num_pixels) {
   num_pixels_ = num_pixels;
   capture_deltas_.Reset();
   encode_usage_->Reset();
+  encode_rsd_->Reset();
   capture_queue_delay_->ClearFrames();
   last_capture_time_ = 0;
   num_process_times_ = 0;
@@ -374,6 +483,7 @@ void OveruseFrameDetector::FrameEncoded(int encode_time_ms) {
     int64_t diff_ms = time - last_encode_sample_ms_;
     encode_time_->AddEncodeSample(encode_time_ms, diff_ms);
     encode_usage_->AddEncodeSample(encode_time_ms, diff_ms);
+    encode_rsd_->AddEncodeSample(encode_time_ms);
   }
   last_encode_sample_ms_ = time;
 }
@@ -391,6 +501,7 @@ int32_t OveruseFrameDetector::Process() {
   next_process_time_ = now + kProcessIntervalMs;
   ++num_process_times_;
 
+  encode_rsd_->Process(now);
   capture_queue_delay_->CalculateDelayChange(diff_ms);
 
   if (num_process_times_ <= options_.min_process_count) {
@@ -430,11 +541,11 @@ int32_t OveruseFrameDetector::Process() {
 
   int rampup_delay =
       in_quick_rampup_ ? kQuickRampUpDelayMs : current_rampup_delay_ms_;
-  LOG(LS_VERBOSE) << "Capture input stats: avg: " << capture_deltas_.Mean()
-                  << " std_dev " << capture_deltas_.StdDev()
-                  << " rampup delay " << rampup_delay
-                  << " overuse >= " << options_.high_capture_jitter_threshold_ms
-                  << " underuse < " << options_.low_capture_jitter_threshold_ms;
+  LOG(LS_INFO) << " Frame stats: capture avg: " << capture_deltas_.Mean()
+               << " capture stddev " << capture_deltas_.StdDev()
+               << " encode usage " << encode_usage_->Value()
+               << " encode rsd " << encode_rsd_->Value()
+               << " rampup delay " << rampup_delay;
   return 0;
 }
 
@@ -444,8 +555,14 @@ bool OveruseFrameDetector::IsOverusing() {
     overusing = capture_deltas_.StdDev() >=
         options_.high_capture_jitter_threshold_ms;
   } else if (options_.enable_encode_usage_method) {
-    overusing = encode_usage_->UsageInPercent() >=
-        options_.high_encode_usage_threshold_percent;
+    bool encode_usage_overuse =
+        encode_usage_->Value() >= options_.high_encode_usage_threshold_percent;
+    bool encode_rsd_overuse = false;
+    if (options_.high_encode_time_rsd_threshold > 0) {
+      encode_rsd_overuse =
+          (encode_rsd_->Value() >= options_.high_encode_time_rsd_threshold);
+    }
+    overusing = encode_usage_overuse || encode_rsd_overuse;
   }
 
   if (overusing) {
@@ -466,8 +583,14 @@ bool OveruseFrameDetector::IsUnderusing(int64_t time_now) {
     underusing = capture_deltas_.StdDev() <
         options_.low_capture_jitter_threshold_ms;
   } else if (options_.enable_encode_usage_method) {
-    underusing = encode_usage_->UsageInPercent() <
-        options_.low_encode_usage_threshold_percent;
+    bool encode_usage_underuse =
+        encode_usage_->Value() < options_.low_encode_usage_threshold_percent;
+    bool encode_rsd_underuse = true;
+    if (options_.low_encode_time_rsd_threshold > 0) {
+      encode_rsd_underuse =
+          (encode_rsd_->Value() < options_.low_encode_time_rsd_threshold);
+    }
+    underusing = encode_usage_underuse && encode_rsd_underuse;
   }
   return underusing;
 }
