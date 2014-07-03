@@ -27,6 +27,7 @@ GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_processing/aec/aec_core_neon.c \
+	third_party/webrtc/modules/audio_processing/aec/aec_rdft_neon.c \
 	third_party/webrtc/modules/audio_processing/aecm/aecm_core_neon.S \
 	third_party/webrtc/modules/audio_processing/ns/nsx_core_neon.S
 
