@@ -37,7 +37,8 @@ RtpRtcp::Configuration::Configuration()
       rtt_stats(NULL),
       audio_messages(NullObjectRtpAudioFeedback()),
       remote_bitrate_estimator(NULL),
-      paced_sender(NULL) {
+      paced_sender(NULL),
+      send_bitrate_observer(NULL) {
 }
 
 RtpRtcp* RtpRtcp::CreateRtpRtcp(const RtpRtcp::Configuration& configuration) {
@@ -60,7 +61,8 @@ ModuleRtpRtcpImpl::ModuleRtpRtcpImpl(const Configuration& configuration)
                   configuration.clock,
                   configuration.outgoing_transport,
                   configuration.audio_messages,
-                  configuration.paced_sender),
+                  configuration.paced_sender,
+                  configuration.send_bitrate_observer),
       rtcp_sender_(configuration.id,
                    configuration.audio,
                    configuration.clock,
@@ -331,6 +333,42 @@ int32_t ModuleRtpRtcpImpl::SetSequenceNumber(
     const uint16_t seq_num) {
   rtp_sender_.SetSequenceNumber(seq_num);
   return 0;  // TODO(pwestin): change to void.
+}
+
+void ModuleRtpRtcpImpl::SetRtpStateForSsrc(uint32_t ssrc,
+                                           const RtpState& rtp_state) {
+  if (rtp_sender_.SSRC() == ssrc) {
+    rtp_sender_.SetRtpState(rtp_state);
+    return;
+  }
+  if (rtp_sender_.RtxSsrc() == ssrc) {
+    rtp_sender_.SetRtxRtpState(rtp_state);
+    return;
+  }
+
+  CriticalSectionScoped lock(critical_section_module_ptrs_.get());
+  for (size_t i = 0; i < child_modules_.size(); ++i) {
+    child_modules_[i]->SetRtpStateForSsrc(ssrc, rtp_state);
+  }
+}
+
+bool ModuleRtpRtcpImpl::GetRtpStateForSsrc(uint32_t ssrc, RtpState* rtp_state) {
+  if (rtp_sender_.SSRC() == ssrc) {
+    *rtp_state = rtp_sender_.GetRtpState();
+    return true;
+  }
+
+  if (rtp_sender_.RtxSsrc() == ssrc) {
+    *rtp_state = rtp_sender_.GetRtxRtpState();
+    return true;
+  }
+
+  CriticalSectionScoped lock(critical_section_module_ptrs_.get());
+  for (size_t i = 0; i < child_modules_.size(); ++i) {
+    if (child_modules_[i]->GetRtpStateForSsrc(ssrc, rtp_state))
+      return true;
+  }
+  return false;
 }
 
 uint32_t ModuleRtpRtcpImpl::SSRC() const {
@@ -1196,16 +1234,6 @@ void ModuleRtpRtcpImpl::BitrateSent(uint32_t* total_rate,
     *fec_rate = rtp_sender_.FecOverheadRate();
   if (nack_rate != NULL)
     *nack_rate = rtp_sender_.NackOverheadRate();
-}
-
-void ModuleRtpRtcpImpl::RegisterVideoBitrateObserver(
-    BitrateStatisticsObserver* observer) {
-  assert(!IsDefaultModule());
-  rtp_sender_.RegisterBitrateObserver(observer);
-}
-
-BitrateStatisticsObserver* ModuleRtpRtcpImpl::GetVideoBitrateObserver() const {
-  return rtp_sender_.GetBitrateObserver();
 }
 
 void ModuleRtpRtcpImpl::OnRequestIntraFrame() {

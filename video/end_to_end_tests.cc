@@ -58,6 +58,7 @@ class EndToEndTest : public test::CallTest {
   void RespectsRtcpMode(newapi::RtcpMode rtcp_mode);
   void TestXrReceiverReferenceTimeReport(bool enable_rrtr);
   void TestSendsSetSsrcs(size_t num_ssrcs, bool send_single_ssrc_first);
+  void TestRtpStatePreservation(bool use_rtx);
 };
 
 TEST_F(EndToEndTest, ReceiverCanBeStartedTwice) {
@@ -253,8 +254,7 @@ TEST_F(EndToEndTest, ReceivesAndRetransmitsNack) {
    private:
     virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
       RTPHeader header;
-      EXPECT_TRUE(
-          rtp_parser_->Parse(packet, static_cast<int>(length), &header));
+      EXPECT_TRUE(rtp_parser_->Parse(packet, length, &header));
 
       // Never drop retransmitted packets.
       if (dropped_packets_.find(header.sequenceNumber) !=
@@ -341,7 +341,7 @@ TEST_F(EndToEndTest, DISABLED_CanReceiveFec) {
     virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE
         EXCLUSIVE_LOCKS_REQUIRED(crit_) {
       RTPHeader header;
-      EXPECT_TRUE(parser_->Parse(packet, static_cast<int>(length), &header));
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
 
       EXPECT_EQ(kRedPayloadType, header.payloadType);
       int encapsulated_payload_type =
@@ -434,7 +434,7 @@ void EndToEndTest::DecodesRetransmittedFrame(bool retransmit_over_rtx) {
    public:
     explicit RetransmissionObserver(bool expect_rtx)
         : EndToEndTest(kDefaultTimeoutMs),
-          retransmission_ssrc_(expect_rtx ? kSendRtxSsrc : kSendSsrcs[0]),
+          retransmission_ssrc_(expect_rtx ? kSendRtxSsrcs[0] : kSendSsrcs[0]),
           retransmission_payload_type_(expect_rtx ? kSendRtxPayloadType
                                                   : kFakeSendPayloadType),
           marker_bits_observed_(0),
@@ -444,7 +444,7 @@ void EndToEndTest::DecodesRetransmittedFrame(bool retransmit_over_rtx) {
    private:
     virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
       RTPHeader header;
-      EXPECT_TRUE(parser_->Parse(packet, static_cast<int>(length), &header));
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
 
       if (header.timestamp == retransmitted_timestamp_) {
         EXPECT_EQ(retransmission_ssrc_, header.ssrc);
@@ -481,10 +481,11 @@ void EndToEndTest::DecodesRetransmittedFrame(bool retransmit_over_rtx) {
       send_config->rtp.nack.rtp_history_ms = kNackRtpHistoryMs;
       (*receive_configs)[0].pre_render_callback = this;
       (*receive_configs)[0].rtp.nack.rtp_history_ms = kNackRtpHistoryMs;
-      if (retransmission_ssrc_ == kSendRtxSsrc) {
-        send_config->rtp.rtx.ssrcs.push_back(kSendRtxSsrc);
+      if (retransmission_ssrc_ == kSendRtxSsrcs[0]) {
+        send_config->rtp.rtx.ssrcs.push_back(kSendRtxSsrcs[0]);
         send_config->rtp.rtx.payload_type = kSendRtxPayloadType;
-        (*receive_configs)[0].rtp.rtx[kSendRtxPayloadType].ssrc = kSendRtxSsrc;
+        (*receive_configs)[0].rtp.rtx[kSendRtxPayloadType].ssrc =
+            kSendRtxSsrcs[0];
         (*receive_configs)[0].rtp.rtx[kSendRtxPayloadType].payload_type =
             kSendRtxPayloadType;
       }
@@ -630,7 +631,7 @@ void EndToEndTest::ReceivesPliAndRecovers(int rtp_history_ms) {
    private:
     virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
       RTPHeader header;
-      EXPECT_TRUE(parser_->Parse(packet, static_cast<int>(length), &header));
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
 
       // Drop all retransmitted packets to force a PLI.
       if (header.timestamp <= highest_dropped_timestamp_)
@@ -722,7 +723,7 @@ TEST_F(EndToEndTest, UnknownRtpPacketGivesUnknownSsrcReturnCode) {
    private:
     virtual DeliveryStatus DeliverPacket(const uint8_t* packet,
                                          size_t length) OVERRIDE {
-      if (RtpHeaderParser::IsRtcp(packet, static_cast<int>(length))) {
+      if (RtpHeaderParser::IsRtcp(packet, length)) {
         return receiver_->DeliverPacket(packet, length);
       } else {
         DeliveryStatus delivery_status =
@@ -917,7 +918,7 @@ TEST_F(EndToEndTest, SendsAndReceivesMultipleStreams) {
     int height = codec_settings[i].height;
     observers[i] = new VideoOutputObserver(&frame_generators[i], width, height);
 
-    VideoSendStream::Config send_config = sender_call->GetDefaultSendConfig();
+    VideoSendStream::Config send_config;
     send_config.rtp.ssrcs.push_back(ssrc);
     send_config.encoder_settings.encoder = encoders[i].get();
     send_config.encoder_settings.payload_name = "VP8";
@@ -933,8 +934,7 @@ TEST_F(EndToEndTest, SendsAndReceivesMultipleStreams) {
         sender_call->CreateVideoSendStream(send_config, video_streams, NULL);
     send_streams[i]->Start();
 
-    VideoReceiveStream::Config receive_config =
-        receiver_call->GetDefaultReceiveConfig();
+    VideoReceiveStream::Config receive_config;
     receive_config.renderer = observers[i];
     receive_config.rtp.remote_ssrc = ssrc;
     receive_config.rtp.local_ssrc = kReceiverLocalSsrc;
@@ -1187,7 +1187,7 @@ void EndToEndTest::TestSendsSetSsrcs(size_t num_ssrcs,
    private:
     virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
       RTPHeader header;
-      EXPECT_TRUE(parser_->Parse(packet, static_cast<int>(length), &header));
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
 
       EXPECT_TRUE(valid_ssrcs_[header.ssrc])
           << "Received unknown SSRC: " << header.ssrc;
@@ -1541,6 +1541,253 @@ TEST_F(EndToEndTest, SendsSetSimulcastSsrcs) {
 
 TEST_F(EndToEndTest, CanSwitchToUseAllSsrcs) {
   TestSendsSetSsrcs(kNumSsrcs, true);
+}
+
+TEST_F(EndToEndTest, RedundantPayloadsTransmittedOnAllSsrcs) {
+  class ObserveRedundantPayloads: public test::EndToEndTest {
+   public:
+    ObserveRedundantPayloads()
+        : EndToEndTest(kDefaultTimeoutMs), ssrcs_to_observe_(kNumSsrcs) {
+          for(size_t i = 0; i < kNumSsrcs; ++i) {
+            registered_rtx_ssrc_[kSendRtxSsrcs[i]] = true;
+          }
+        }
+
+   private:
+    virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
+      RTPHeader header;
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
+
+      if (!registered_rtx_ssrc_[header.ssrc])
+        return SEND_PACKET;
+
+      EXPECT_LE(static_cast<size_t>(header.headerLength + header.paddingLength),
+                length);
+      const bool packet_is_redundant_payload =
+          static_cast<size_t>(header.headerLength + header.paddingLength) <
+          length;
+
+      if (!packet_is_redundant_payload)
+        return SEND_PACKET;
+
+      if (!observed_redundant_retransmission_[header.ssrc]) {
+        observed_redundant_retransmission_[header.ssrc] = true;
+        if (--ssrcs_to_observe_ == 0)
+          observation_complete_->Set();
+      }
+
+      return SEND_PACKET;
+    }
+
+    virtual size_t GetNumStreams() const OVERRIDE { return kNumSsrcs; }
+
+    virtual void ModifyConfigs(
+        VideoSendStream::Config* send_config,
+        std::vector<VideoReceiveStream::Config>* receive_configs,
+        std::vector<VideoStream>* video_streams) OVERRIDE {
+      // Set low simulcast bitrates to not have to wait for bandwidth ramp-up.
+      for (size_t i = 0; i < video_streams->size(); ++i) {
+        (*video_streams)[i].min_bitrate_bps = 10000;
+        (*video_streams)[i].target_bitrate_bps = 15000;
+        (*video_streams)[i].max_bitrate_bps = 20000;
+      }
+      // Significantly higher than max bitrates for all video streams -> forcing
+      // padding to trigger redundant padding on all RTX SSRCs.
+      send_config->rtp.min_transmit_bitrate_bps = 100000;
+
+      send_config->rtp.rtx.payload_type = kSendRtxPayloadType;
+      send_config->rtp.rtx.pad_with_redundant_payloads = true;
+
+      for (size_t i = 0; i < kNumSsrcs; ++i)
+        send_config->rtp.rtx.ssrcs.push_back(kSendRtxSsrcs[i]);
+    }
+
+    virtual void PerformTest() OVERRIDE {
+      EXPECT_EQ(kEventSignaled, Wait())
+          << "Timed out while waiting for redundant payloads on all SSRCs.";
+    }
+
+   private:
+    size_t ssrcs_to_observe_;
+    std::map<uint32_t, bool> observed_redundant_retransmission_;
+    std::map<uint32_t, bool> registered_rtx_ssrc_;
+  } test;
+
+  RunBaseTest(&test);
+}
+
+void EndToEndTest::TestRtpStatePreservation(bool use_rtx) {
+  static const uint32_t kMaxSequenceNumberGap = 100;
+  static const uint64_t kMaxTimestampGap = kDefaultTimeoutMs * 90;
+  class RtpSequenceObserver : public test::RtpRtcpObserver {
+   public:
+    RtpSequenceObserver(bool use_rtx)
+        : test::RtpRtcpObserver(kDefaultTimeoutMs),
+          crit_(CriticalSectionWrapper::CreateCriticalSection()),
+          ssrcs_to_observe_(kNumSsrcs) {
+      for (size_t i = 0; i < kNumSsrcs; ++i) {
+        configured_ssrcs_[kSendSsrcs[i]] = true;
+        if (use_rtx)
+          configured_ssrcs_[kSendRtxSsrcs[i]] = true;
+      }
+    }
+
+    void ResetExpectedSsrcs(size_t num_expected_ssrcs) {
+      CriticalSectionScoped lock(crit_.get());
+      ssrc_observed_.clear();
+      ssrcs_to_observe_ = num_expected_ssrcs;
+    }
+
+   private:
+    virtual Action OnSendRtp(const uint8_t* packet, size_t length) OVERRIDE {
+      RTPHeader header;
+      EXPECT_TRUE(parser_->Parse(packet, length, &header));
+      const uint32_t ssrc = header.ssrc;
+      const uint16_t sequence_number = header.sequenceNumber;
+      const uint32_t timestamp = header.timestamp;
+      const bool only_padding =
+          static_cast<size_t>(header.headerLength + header.paddingLength) ==
+          length;
+
+      EXPECT_TRUE(configured_ssrcs_[ssrc])
+          << "Received SSRC that wasn't configured: " << ssrc;
+
+      std::map<uint32_t, uint16_t>::iterator it =
+          last_observed_sequence_number_.find(header.ssrc);
+      if (it == last_observed_sequence_number_.end()) {
+        last_observed_sequence_number_[ssrc] = sequence_number;
+        last_observed_timestamp_[ssrc] = timestamp;
+      } else {
+        // Verify sequence numbers are reasonably close.
+        uint32_t extended_sequence_number = sequence_number;
+        // Check for roll-over.
+        if (sequence_number < last_observed_sequence_number_[ssrc])
+          extended_sequence_number += 0xFFFFu + 1;
+        EXPECT_LE(
+            extended_sequence_number - last_observed_sequence_number_[ssrc],
+            kMaxSequenceNumberGap)
+            << "Gap in sequence numbers ("
+            << last_observed_sequence_number_[ssrc] << " -> " << sequence_number
+            << ") too large for SSRC: " << ssrc << ".";
+        last_observed_sequence_number_[ssrc] = sequence_number;
+
+        // TODO(pbos): Remove this check if we ever have monotonically
+        // increasing timestamps. Right now padding packets add a delta which
+        // can cause reordering between padding packets and regular packets,
+        // hence we drop padding-only packets to not flake.
+        if (only_padding) {
+          // Verify that timestamps are reasonably close.
+          uint64_t extended_timestamp = timestamp;
+          // Check for roll-over.
+          if (timestamp < last_observed_timestamp_[ssrc])
+            extended_timestamp += static_cast<uint64_t>(0xFFFFFFFFu) + 1;
+          EXPECT_LE(extended_timestamp - last_observed_timestamp_[ssrc],
+                    kMaxTimestampGap)
+              << "Gap in timestamps (" << last_observed_timestamp_[ssrc]
+              << " -> " << timestamp << ") too large for SSRC: " << ssrc << ".";
+        }
+        last_observed_timestamp_[ssrc] = timestamp;
+      }
+
+      CriticalSectionScoped lock(crit_.get());
+      // Wait for media packets on all ssrcs.
+      if (!ssrc_observed_[ssrc] && !only_padding) {
+        ssrc_observed_[ssrc] = true;
+        if (--ssrcs_to_observe_ == 0)
+          observation_complete_->Set();
+      }
+
+      return SEND_PACKET;
+    }
+
+    std::map<uint32_t, uint16_t> last_observed_sequence_number_;
+    std::map<uint32_t, uint32_t> last_observed_timestamp_;
+    std::map<uint32_t, bool> configured_ssrcs_;
+
+    scoped_ptr<CriticalSectionWrapper> crit_;
+    size_t ssrcs_to_observe_ GUARDED_BY(crit_);
+    std::map<uint32_t, bool> ssrc_observed_ GUARDED_BY(crit_);
+  } observer(use_rtx);
+
+  CreateCalls(Call::Config(observer.SendTransport()),
+              Call::Config(observer.ReceiveTransport()));
+  observer.SetReceivers(sender_call_->Receiver(), NULL);
+
+  CreateSendConfig(kNumSsrcs);
+
+  if (use_rtx) {
+    for (size_t i = 0; i < kNumSsrcs; ++i) {
+      send_config_.rtp.rtx.ssrcs.push_back(kSendRtxSsrcs[i]);
+    }
+    send_config_.rtp.rtx.payload_type = kSendRtxPayloadType;
+  }
+
+  // Lower bitrates so that all streams send initially.
+  for (size_t i = 0; i < video_streams_.size(); ++i) {
+    video_streams_[i].min_bitrate_bps = 10000;
+    video_streams_[i].target_bitrate_bps = 15000;
+    video_streams_[i].max_bitrate_bps = 20000;
+  }
+
+  CreateMatchingReceiveConfigs();
+
+  CreateStreams();
+  CreateFrameGeneratorCapturer();
+
+  Start();
+  EXPECT_EQ(kEventSignaled, observer.Wait())
+      << "Timed out waiting for all SSRCs to send packets.";
+
+  // Test stream resetting more than once to make sure that the state doesn't
+  // get set once (this could be due to using std::map::insert for instance).
+  for (size_t i = 0; i < 3; ++i) {
+    frame_generator_capturer_->Stop();
+    sender_call_->DestroyVideoSendStream(send_stream_);
+
+    // Re-create VideoSendStream with only one stream.
+    std::vector<VideoStream> one_stream = video_streams_;
+    one_stream.resize(1);
+    send_stream_ =
+        sender_call_->CreateVideoSendStream(send_config_, one_stream, NULL);
+    send_stream_->Start();
+    CreateFrameGeneratorCapturer();
+    frame_generator_capturer_->Start();
+
+    observer.ResetExpectedSsrcs(1);
+    EXPECT_EQ(kEventSignaled, observer.Wait())
+        << "Timed out waiting for single RTP packet.";
+
+    // Reconfigure back to use all streams.
+    send_stream_->ReconfigureVideoEncoder(video_streams_, NULL);
+    observer.ResetExpectedSsrcs(kNumSsrcs);
+    EXPECT_EQ(kEventSignaled, observer.Wait())
+        << "Timed out waiting for all SSRCs to send packets.";
+
+    // Reconfigure down to one stream.
+    send_stream_->ReconfigureVideoEncoder(one_stream, NULL);
+    observer.ResetExpectedSsrcs(1);
+    EXPECT_EQ(kEventSignaled, observer.Wait())
+        << "Timed out waiting for single RTP packet.";
+
+    // Reconfigure back to use all streams.
+    send_stream_->ReconfigureVideoEncoder(video_streams_, NULL);
+    observer.ResetExpectedSsrcs(kNumSsrcs);
+    EXPECT_EQ(kEventSignaled, observer.Wait())
+        << "Timed out waiting for all SSRCs to send packets.";
+  }
+
+  observer.StopSending();
+
+  Stop();
+  DestroyStreams();
+}
+
+TEST_F(EndToEndTest, RestartingSendStreamPreservesRtpState) {
+  TestRtpStatePreservation(false);
+}
+
+TEST_F(EndToEndTest, RestartingSendStreamPreservesRtpStatesWithRtx) {
+  TestRtpStatePreservation(true);
 }
 
 }  // namespace webrtc

@@ -67,6 +67,7 @@ class RtpRtcp : public Module {
     RtpAudioFeedback* audio_messages;
     RemoteBitrateEstimator* remote_bitrate_estimator;
     PacedSender* paced_sender;
+    BitrateStatisticsObserver* send_bitrate_observer;
   };
 
   /*
@@ -203,6 +204,10 @@ class RtpRtcp : public Module {
     */
     virtual int32_t SetSequenceNumber(const uint16_t seq) = 0;
 
+    virtual void SetRtpStateForSsrc(uint32_t ssrc,
+                                    const RtpState& rtp_state) = 0;
+    virtual bool GetRtpStateForSsrc(uint32_t ssrc, RtpState* rtp_state) = 0;
+
     /*
     *   Get SSRC
     */
@@ -303,13 +308,6 @@ class RtpRtcp : public Module {
                              uint32_t* videoRate,
                              uint32_t* fecRate,
                              uint32_t* nackRate) const = 0;
-
-    /*
-    *   Called on any new send bitrate estimate.
-    */
-    virtual void RegisterVideoBitrateObserver(
-        BitrateStatisticsObserver* observer) = 0;
-    virtual BitrateStatisticsObserver* GetVideoBitrateObserver() const = 0;
 
     /*
     *   Used by the codec module to deliver a video or audio frame for

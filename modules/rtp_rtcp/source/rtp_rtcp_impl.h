@@ -73,6 +73,10 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
   // Set SequenceNumber, default is a random number.
   virtual int32_t SetSequenceNumber(const uint16_t seq) OVERRIDE;
 
+  virtual void SetRtpStateForSsrc(uint32_t ssrc,
+                                  const RtpState& rtp_state) OVERRIDE;
+  virtual bool GetRtpStateForSsrc(uint32_t ssrc, RtpState* rtp_state) OVERRIDE;
+
   virtual uint32_t SSRC() const OVERRIDE;
 
   // Configure SSRC, default is a random number.
@@ -339,11 +343,6 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
                            uint32_t* video_rate,
                            uint32_t* fec_rate,
                            uint32_t* nackRate) const OVERRIDE;
-
-  virtual void RegisterVideoBitrateObserver(BitrateStatisticsObserver* observer)
-      OVERRIDE;
-
-  virtual BitrateStatisticsObserver* GetVideoBitrateObserver() const OVERRIDE;
 
   virtual uint32_t SendTimeOfSendReport(const uint32_t send_report);
 

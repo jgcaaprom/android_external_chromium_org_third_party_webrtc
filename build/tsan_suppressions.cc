@@ -23,9 +23,11 @@ char kTSanDefaultSuppressions[] =
 
 // WebRTC specific suppressions.
 
-// False positive in system wrappers.
-// https://code.google.com/p/webrtc/issues/detail?id=300
-"race:webrtc/system_wrappers/source/thread_posix.cc\n"
+// Usage of trace callback and trace level is racy in libjingle_media_unittests.
+// https://code.google.com/p/webrtc/issues/detail?id=3372
+"race:webrtc::TraceImpl::WriteToFile\n"
+"race:webrtc::VideoEngine::SetTraceFilter\n"
+"race:webrtc::VoiceEngine::SetTraceFilter\n"
 
 // Audio processing
 // https://code.google.com/p/webrtc/issues/detail?id=2521 for details.
@@ -65,7 +67,6 @@ char kTSanDefaultSuppressions[] =
 "deadlock:webrtc::ProcessThreadImpl::RegisterModule\n"
 "deadlock:webrtc::RTCPReceiver::SetSsrcs\n"
 "deadlock:webrtc::RTPSenderAudio::RegisterAudioPayload\n"
-"deadlock:webrtc/system_wrappers/source/logging_unittest.cc\n"
 "deadlock:webrtc::test::UdpSocketManagerPosixImpl::RemoveSocket\n"
 "deadlock:webrtc::vcm::VideoReceiver::RegisterPacketRequestCallback\n"
 "deadlock:webrtc::VideoSendStreamTest_SuspendBelowMinBitrate_Test::TestBody\n"

@@ -94,7 +94,7 @@ class RtpSenderTest : public ::testing::Test {
 
   virtual void SetUp() {
     rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_));
+                                    &mock_paced_sender_, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 
@@ -204,7 +204,7 @@ TEST_F(RtpSenderTest, BuildRTPPacket) {
   EXPECT_EQ(kRtpHeaderSize, length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   const bool valid_rtp_header = rtp_parser.Parse(rtp_header, NULL);
@@ -235,7 +235,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithTransmissionOffsetExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -276,7 +276,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithNegativeTransmissionOffsetExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -306,7 +306,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithAbsoluteSendTimeExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -344,7 +344,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithAudioLevelExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   // Updating audio level is done in RTPSenderAudio, so simulate it here.
@@ -394,7 +394,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithHeaderExtensions) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   // Updating audio level is done in RTPSenderAudio, so simulate it here.
@@ -471,8 +471,8 @@ TEST_F(RtpSenderTest, TrafficSmoothingWithExtensions) {
   EXPECT_EQ(1, transport_.packets_sent_);
   EXPECT_EQ(rtp_length, transport_.last_sent_packet_len_);
   // Parse sent packet.
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(
-      transport_.last_sent_packet_, rtp_length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                                 rtp_length);
   webrtc::RTPHeader rtp_header;
   RtpHeaderExtensionMap map;
   map.Register(kRtpExtensionTransmissionTimeOffset,
@@ -533,8 +533,8 @@ TEST_F(RtpSenderTest, TrafficSmoothingRetransmits) {
   EXPECT_EQ(rtp_length, transport_.last_sent_packet_len_);
 
   // Parse sent packet.
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(
-      transport_.last_sent_packet_, rtp_length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                                 rtp_length);
   webrtc::RTPHeader rtp_header;
   RtpHeaderExtensionMap map;
   map.Register(kRtpExtensionTransmissionTimeOffset,
@@ -672,7 +672,7 @@ TEST_F(RtpSenderTest, SendPadding) {
 TEST_F(RtpSenderTest, SendRedundantPayloads) {
   MockTransport transport;
   rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport, NULL,
-                                  &mock_paced_sender_));
+                                  &mock_paced_sender_, NULL));
   rtp_sender_->SetSequenceNumber(kSeqNum);
   // Make all packets go through the pacer.
   EXPECT_CALL(mock_paced_sender_,
@@ -744,8 +744,8 @@ TEST_F(RtpSenderTest, SendGenericVideo) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
@@ -770,8 +770,8 @@ TEST_F(RtpSenderTest, SendGenericVideo) {
                                              1234, 4321, payload,
                                              sizeof(payload), NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser2(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser2(transport_.last_sent_packet_,
+                                          transport_.last_sent_packet_len_);
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
   payload_data = GetPayloadData(rtp_header, transport_.last_sent_packet_);
@@ -865,6 +865,8 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
     uint32_t ssrc_;
     BitrateStatistics bitrate_;
   } callback;
+  rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
+                                  &mock_paced_sender_, &callback));
 
   // Simulate kNumPackets sent with kPacketInterval ms intervals.
   const uint32_t kNumPackets = 15;
@@ -880,8 +882,6 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
   uint8_t payload[] = {47, 11, 32, 93, 89};
   rtp_sender_->SetStorePacketsStatus(true, 1);
   uint32_t ssrc = rtp_sender_->SSRC();
-
-  rtp_sender_->RegisterBitrateObserver(&callback);
 
   // Initial process call so we get a new time window.
   rtp_sender_->ProcessBitrate();
@@ -912,7 +912,7 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
   EXPECT_EQ((kPacketOverhead + sizeof(payload)) * 8 * expected_packet_rate,
             callback.bitrate_.bitrate_bps);
 
-  rtp_sender_->RegisterBitrateObserver(NULL);
+  rtp_sender_.reset();
 }
 
 class RtpSenderAudioTest : public RtpSenderTest {
@@ -922,7 +922,7 @@ class RtpSenderAudioTest : public RtpSenderTest {
   virtual void SetUp() {
     payload_ = kAudioPayload;
     rtp_sender_.reset(new RTPSender(0, true, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_));
+                                    &mock_paced_sender_, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 };
@@ -1018,8 +1018,8 @@ TEST_F(RtpSenderAudioTest, SendAudio) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
@@ -1047,8 +1047,8 @@ TEST_F(RtpSenderAudioTest, SendAudioWithAudioLevelExtension) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 

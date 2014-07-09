@@ -15,8 +15,9 @@ namespace webrtc {
 namespace test {
 
 CallTest::CallTest()
-    : send_stream_(NULL),
-      fake_encoder_(Clock::GetRealTimeClock()) {
+    : clock_(Clock::GetRealTimeClock()),
+      send_stream_(NULL),
+      fake_encoder_(clock_) {
 }
 CallTest::~CallTest() {
 }
@@ -85,7 +86,7 @@ void CallTest::CreateReceiverCall(const Call::Config& config) {
 
 void CallTest::CreateSendConfig(size_t num_streams) {
   assert(num_streams <= kNumSsrcs);
-  send_config_ = sender_call_->GetDefaultSendConfig();
+  send_config_ = VideoSendStream::Config();
   send_config_.encoder_settings.encoder = &fake_encoder_;
   send_config_.encoder_settings.payload_name = "FAKE";
   send_config_.encoder_settings.payload_type = kFakeSendPayloadType;
@@ -97,7 +98,7 @@ void CallTest::CreateSendConfig(size_t num_streams) {
 void CallTest::CreateMatchingReceiveConfigs() {
   assert(!send_config_.rtp.ssrcs.empty());
   assert(receive_configs_.empty());
-  VideoReceiveStream::Config config = receiver_call_->GetDefaultReceiveConfig();
+  VideoReceiveStream::Config config;
   VideoCodec codec =
       test::CreateDecoderVideoCodec(send_config_.encoder_settings);
   config.codecs.push_back(codec);
@@ -121,7 +122,7 @@ void CallTest::CreateFrameGeneratorCapturer() {
                                            stream.width,
                                            stream.height,
                                            stream.max_framerate,
-                                           Clock::GetRealTimeClock()));
+                                           clock_));
 }
 void CallTest::CreateStreams() {
   assert(send_stream_ == NULL);
@@ -150,7 +151,8 @@ const unsigned int CallTest::kLongTimeoutMs = 120 * 1000;
 const uint8_t CallTest::kSendPayloadType = 100;
 const uint8_t CallTest::kFakeSendPayloadType = 125;
 const uint8_t CallTest::kSendRtxPayloadType = 98;
-const uint32_t CallTest::kSendRtxSsrc = 0xBADCAFE;
+const uint32_t CallTest::kSendRtxSsrcs[kNumSsrcs] = {0xBADCAFD, 0xBADCAFE,
+                                                     0xBADCAFF};
 const uint32_t CallTest::kSendSsrcs[kNumSsrcs] = {0xC0FFED, 0xC0FFEE, 0xC0FFEF};
 const uint32_t CallTest::kReceiverLocalSsrc = 0x123456;
 const int CallTest::kNackRtpHistoryMs = 1000;
