@@ -225,6 +225,7 @@ struct StreamDataCounters {
      retransmitted_packets(0),
      fec_packets(0) {}
 
+  // TODO(pbos): Rename bytes -> media_bytes.
   uint32_t bytes;  // Payload bytes, excluding RTP headers and padding.
   uint32_t header_bytes;  // Number of bytes used by RTP headers.
   uint32_t padding_bytes;  // Number of padding bytes.
@@ -266,6 +267,15 @@ class FrameCountObserver {
   virtual void FrameCountUpdated(FrameType frame_type,
                                  uint32_t frame_count,
                                  const unsigned int ssrc) = 0;
+};
+
+// Callback, used to notify an observer whenever the send-side delay is updated.
+class SendSideDelayObserver {
+ public:
+  virtual ~SendSideDelayObserver() {}
+  virtual void SendSideDelayUpdated(int avg_delay_ms,
+                                    int max_delay_ms,
+                                    uint32_t ssrc) = 0;
 };
 
 // ==================================================================

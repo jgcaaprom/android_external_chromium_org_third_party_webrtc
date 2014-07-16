@@ -159,9 +159,6 @@ class ViEChannel
   // Sets the CName for the outgoing stream on the channel.
   int32_t SetRTCPCName(const char rtcp_cname[]);
 
-  // Gets the CName for the outgoing stream on the channel.
-  int32_t GetRTCPCName(char rtcp_cname[]);
-
   // Gets the CName of the incoming stream.
   int32_t GetRemoteRTCPCName(char rtcp_cname[]);
   int32_t RegisterRtpObserver(ViERTPObserver* observer);
@@ -215,7 +212,10 @@ class ViEChannel
                          uint32_t* video_bitrate_sent,
                          uint32_t* fec_bitrate_sent,
                          uint32_t* nackBitrateSent) const;
+  // TODO(holmer): Deprecated. We should use the SendSideDelayObserver instead
+  // to avoid deadlocks.
   bool GetSendSideDelay(int* avg_send_delay, int* max_send_delay) const;
+  void RegisterSendSideDelayObserver(SendSideDelayObserver* observer);
   void GetReceiveBandwidthEstimatorStats(
       ReceiveBandwidthEstimatorStats* output) const;
 
@@ -411,7 +411,8 @@ class ViEChannel
     DISALLOW_COPY_AND_ASSIGN(RegisterableCallback);
   };
 
-  class : public RegisterableCallback<BitrateStatisticsObserver> {
+  class RegisterableBitrateStatisticsObserver:
+    public RegisterableCallback<BitrateStatisticsObserver> {
     virtual void Notify(const BitrateStatistics& stats, uint32_t ssrc) {
       CriticalSectionScoped cs(critsect_.get());
       if (callback_)
@@ -419,6 +420,28 @@ class ViEChannel
     }
   }
   send_bitrate_observer_;
+
+  class RegisterableFrameCountObserver
+      : public RegisterableCallback<FrameCountObserver> {
+    virtual void FrameCountUpdated(FrameType frame_type,
+                                   uint32_t frame_count,
+                                   const unsigned int ssrc) {
+      CriticalSectionScoped cs(critsect_.get());
+      if (callback_)
+        callback_->FrameCountUpdated(frame_type, frame_count, ssrc);
+    }
+  } send_frame_count_observer_;
+
+  class RegisterableSendSideDelayObserver :
+      public RegisterableCallback<SendSideDelayObserver> {
+    virtual void SendSideDelayUpdated(int avg_delay_ms,
+                                      int max_delay_ms,
+                                      uint32_t ssrc) OVERRIDE {
+      CriticalSectionScoped cs(critsect_.get());
+      if (callback_)
+        callback_->SendSideDelayUpdated(avg_delay_ms, max_delay_ms, ssrc);
+    }
+  } send_side_delay_observer_;
 
   int32_t channel_id_;
   int32_t engine_id_;

@@ -188,61 +188,6 @@ RTCPSender::~RTCPSender() {
 }
 
 int32_t
-RTCPSender::Init()
-{
-    CriticalSectionScoped lock(_criticalSectionRTCPSender);
-
-    _method = kRtcpOff;
-    _cbTransport = NULL;
-    _usingNack = false;
-    _sending = false;
-    _sendTMMBN = false;
-    _TMMBR = false;
-    _IJ = false;
-    _REMB = false;
-    _sendREMB = false;
-    last_rtp_timestamp_ = 0;
-    last_frame_capture_time_ms_ = -1;
-    start_timestamp_ = -1;
-    _SSRC = 0;
-    _remoteSSRC = 0;
-    _cameraDelayMS = 0;
-    _sequenceNumberFIR = 0;
-    _tmmbr_Send = 0;
-    _packetOH_Send = 0;
-    _nextTimeToSendRTCP = 0;
-    _CSRCs = 0;
-    _appSend = false;
-    _appSubType = 0;
-
-    if(_appData)
-    {
-        delete [] _appData;
-        _appData = NULL;
-    }
-    _appLength = 0;
-
-    xrSendReceiverReferenceTimeEnabled_ = false;
-
-    _xrSendVoIPMetric = false;
-
-    memset(&_xrVoIPMetric, 0, sizeof(_xrVoIPMetric));
-    memset(_CNAME, 0, sizeof(_CNAME));
-    memset(_lastSendReport, 0, sizeof(_lastSendReport));
-    memset(_lastRTCPTime, 0, sizeof(_lastRTCPTime));
-    last_xr_rr_.clear();
-
-    memset(&packet_type_counter_, 0, sizeof(packet_type_counter_));
-    return 0;
-}
-
-void
-RTCPSender::ChangeUniqueId(const int32_t id)
-{
-    _id = id;
-}
-
-int32_t
 RTCPSender::RegisterSendTransport(Transport* outgoingTransport)
 {
     CriticalSectionScoped lock(_criticalSectionTransport);
@@ -330,17 +275,17 @@ RTCPSender::SetREMBData(const uint32_t bitrate,
 {
     CriticalSectionScoped lock(_criticalSectionRTCPSender);
     _rembBitrate = bitrate;
- 
+
     if(_sizeRembSSRC < numberOfSSRC)
     {
         delete [] _rembSSRC;
         _rembSSRC = new uint32_t[numberOfSSRC];
         _sizeRembSSRC = numberOfSSRC;
-    } 
+    }
 
     _lengthRembSSRC = numberOfSSRC;
     for (int i = 0; i < numberOfSSRC; i++)
-    {  
+    {
         _rembSSRC[i] = SSRC[i];
     }
     _sendREMB = true;
@@ -381,6 +326,7 @@ RTCPSender::SetIJStatus(const bool enable)
 }
 
 void RTCPSender::SetStartTimestamp(uint32_t start_timestamp) {
+  CriticalSectionScoped lock(_criticalSectionRTCPSender);
   start_timestamp_ = start_timestamp;
 }
 
@@ -429,14 +375,6 @@ RTCPSender::SetCameraDelay(const int32_t delayMS)
     }
     _cameraDelayMS = delayMS;
     return 0;
-}
-
-int32_t RTCPSender::CNAME(char cName[RTCP_CNAME_SIZE]) {
-  assert(cName);
-  CriticalSectionScoped lock(_criticalSectionRTCPSender);
-  cName[RTCP_CNAME_SIZE - 1] = 0;
-  strncpy(cName, _CNAME, RTCP_CNAME_SIZE - 1);
-  return 0;
 }
 
 int32_t RTCPSender::SetCNAME(const char cName[RTCP_CNAME_SIZE]) {
@@ -694,13 +632,9 @@ int32_t RTCPSender::BuildSR(const FeedbackState& feedback_state,
     // the frame being captured at this moment. We are calculating that
     // timestamp as the last frame's timestamp + the time since the last frame
     // was captured.
-    {
-      // Needs protection since this method is called on the process thread.
-      CriticalSectionScoped lock(_criticalSectionRTCPSender);
-      RTPtime = start_timestamp_ + last_rtp_timestamp_ + (
-          _clock->TimeInMilliseconds() - last_frame_capture_time_ms_) *
-          (feedback_state.frequency_hz / 1000);
-    }
+    RTPtime = start_timestamp_ + last_rtp_timestamp_ +
+              (_clock->TimeInMilliseconds() - last_frame_capture_time_ms_) *
+                  (feedback_state.frequency_hz / 1000);
 
     // Add sender data
     // Save  for our length field
@@ -1175,7 +1109,7 @@ RTCPSender::BuildREMB(uint8_t* rtcpbuffer, int& pos)
     rtcpbuffer[pos++]=(uint8_t)(brMantissa >> 8);
     rtcpbuffer[pos++]=(uint8_t)(brMantissa);
 
-    for (int i = 0; i < _lengthRembSSRC; i++) 
+    for (int i = 0; i < _lengthRembSSRC; i++)
     {
       RtpUtility::AssignUWord32ToBuffer(rtcpbuffer + pos, _rembSSRC[i]);
         pos += 4;
@@ -2110,6 +2044,7 @@ RTCPSender::SendToNetwork(const uint8_t* dataBuffer,
 int32_t
 RTCPSender::SetCSRCStatus(const bool include)
 {
+    CriticalSectionScoped lock(_criticalSectionRTCPSender);
     _includeCSRCs = include;
     return 0;
 }

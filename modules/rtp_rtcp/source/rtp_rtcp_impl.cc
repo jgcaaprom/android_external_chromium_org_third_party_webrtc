@@ -38,20 +38,21 @@ RtpRtcp::Configuration::Configuration()
       audio_messages(NullObjectRtpAudioFeedback()),
       remote_bitrate_estimator(NULL),
       paced_sender(NULL),
-      send_bitrate_observer(NULL) {
+      send_bitrate_observer(NULL),
+      send_frame_count_observer(NULL),
+      send_side_delay_observer(NULL) {
 }
 
 RtpRtcp* RtpRtcp::CreateRtpRtcp(const RtpRtcp::Configuration& configuration) {
   if (configuration.clock) {
     return new ModuleRtpRtcpImpl(configuration);
   } else {
+    // No clock implementation provided, use default clock.
     RtpRtcp::Configuration configuration_copy;
     memcpy(&configuration_copy, &configuration,
            sizeof(RtpRtcp::Configuration));
     configuration_copy.clock = Clock::GetRealTimeClock();
-    ModuleRtpRtcpImpl* rtp_rtcp_instance =
-        new ModuleRtpRtcpImpl(configuration_copy);
-    return rtp_rtcp_instance;
+    return new ModuleRtpRtcpImpl(configuration_copy);
   }
 }
 
@@ -62,7 +63,9 @@ ModuleRtpRtcpImpl::ModuleRtpRtcpImpl(const Configuration& configuration)
                   configuration.outgoing_transport,
                   configuration.audio_messages,
                   configuration.paced_sender,
-                  configuration.send_bitrate_observer),
+                  configuration.send_bitrate_observer,
+                  configuration.send_frame_count_observer,
+                  configuration.send_side_delay_observer),
       rtcp_sender_(configuration.id,
                    configuration.audio,
                    configuration.clock,
@@ -82,7 +85,7 @@ ModuleRtpRtcpImpl::ModuleRtpRtcpImpl(const Configuration& configuration)
           CriticalSectionWrapper::CreateCriticalSection()),
       default_module_(
           static_cast<ModuleRtpRtcpImpl*>(configuration.default_module)),
-      padding_index_(-1),  // Start padding at the first child module.
+      padding_index_(static_cast<size_t>(-1)),  // Start padding at first child.
       nack_method_(kNackOff),
       nack_last_time_sent_full_(0),
       nack_last_seq_number_sent_(0),
@@ -722,10 +725,6 @@ int32_t ModuleRtpRtcpImpl::SetCNAME(const char c_name[RTCP_CNAME_SIZE]) {
   return rtcp_sender_.SetCNAME(c_name);
 }
 
-int32_t ModuleRtpRtcpImpl::CNAME(char c_name[RTCP_CNAME_SIZE]) {
-  return rtcp_sender_.CNAME(c_name);
-}
-
 int32_t ModuleRtpRtcpImpl::AddMixedCNAME(
   const uint32_t ssrc,
   const char c_name[RTCP_CNAME_SIZE]) {
@@ -1348,15 +1347,6 @@ void ModuleRtpRtcpImpl::RegisterSendChannelRtpStatisticsCallback(
 StreamDataCountersCallback*
     ModuleRtpRtcpImpl::GetSendChannelRtpStatisticsCallback() const {
   return rtp_sender_.GetRtpStatisticsCallback();
-}
-
-void ModuleRtpRtcpImpl::RegisterSendFrameCountObserver(
-    FrameCountObserver* observer) {
-  rtp_sender_.RegisterFrameCountObserver(observer);
-}
-
-FrameCountObserver* ModuleRtpRtcpImpl::GetSendFrameCountObserver() const {
-  return rtp_sender_.GetFrameCountObserver();
 }
 
 bool ModuleRtpRtcpImpl::IsDefaultModule() const {

@@ -16,6 +16,7 @@ namespace test {
 
 CallTest::CallTest()
     : clock_(Clock::GetRealTimeClock()),
+      encoder_settings_(NULL),
       send_stream_(NULL),
       fake_encoder_(clock_) {
 }
@@ -39,6 +40,7 @@ void CallTest::RunBaseTest(BaseTest* test) {
   if (test->ShouldCreateReceivers()) {
     CreateMatchingReceiveConfigs();
   }
+  encoder_settings_ = test->GetEncoderSettings();
   test->ModifyConfigs(&send_config_, &receive_configs_, &video_streams_);
   CreateStreams();
   test->OnStreamsCreated(send_stream_, receive_streams_);
@@ -98,18 +100,23 @@ void CallTest::CreateSendConfig(size_t num_streams) {
 void CallTest::CreateMatchingReceiveConfigs() {
   assert(!send_config_.rtp.ssrcs.empty());
   assert(receive_configs_.empty());
+  assert(fake_decoders_.empty());
   VideoReceiveStream::Config config;
   VideoCodec codec =
       test::CreateDecoderVideoCodec(send_config_.encoder_settings);
   config.codecs.push_back(codec);
-  if (send_config_.encoder_settings.encoder == &fake_encoder_) {
-    ExternalVideoDecoder decoder;
-    decoder.decoder = &fake_decoder_;
-    decoder.payload_type = send_config_.encoder_settings.payload_type;
-    config.external_decoders.push_back(decoder);
-  }
   config.rtp.local_ssrc = kReceiverLocalSsrc;
+  if (send_config_.encoder_settings.encoder == &fake_encoder_) {
+    config.external_decoders.resize(1);
+    config.external_decoders[0].payload_type =
+        send_config_.encoder_settings.payload_type;
+  }
   for (size_t i = 0; i < send_config_.rtp.ssrcs.size(); ++i) {
+    if (send_config_.encoder_settings.encoder == &fake_encoder_) {
+      FakeDecoder* decoder = new FakeDecoder();
+      fake_decoders_.push_back(decoder);
+      config.external_decoders[0].decoder = decoder;
+    }
     config.rtp.remote_ssrc = send_config_.rtp.ssrcs[i];
     receive_configs_.push_back(config);
   }
@@ -128,8 +135,8 @@ void CallTest::CreateStreams() {
   assert(send_stream_ == NULL);
   assert(receive_streams_.empty());
 
-  send_stream_ =
-      sender_call_->CreateVideoSendStream(send_config_, video_streams_, NULL);
+  send_stream_ = sender_call_->CreateVideoSendStream(
+      send_config_, video_streams_, encoder_settings_);
 
   for (size_t i = 0; i < receive_configs_.size(); ++i) {
     receive_streams_.push_back(
@@ -144,6 +151,7 @@ void CallTest::DestroyStreams() {
   for (size_t i = 0; i < receive_streams_.size(); ++i)
     receiver_call_->DestroyVideoReceiveStream(receive_streams_[i]);
   receive_streams_.clear();
+  fake_decoders_.clear();
 }
 
 const unsigned int CallTest::kDefaultTimeoutMs = 30 * 1000;
@@ -181,6 +189,10 @@ void BaseTest::OnCallsCreated(Call* sender_call, Call* receiver_call) {
 
 size_t BaseTest::GetNumStreams() const {
   return 1;
+}
+
+const void* BaseTest::GetEncoderSettings() {
+  return NULL;
 }
 
 void BaseTest::ModifyConfigs(

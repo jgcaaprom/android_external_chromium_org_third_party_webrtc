@@ -47,8 +47,8 @@ class RtpRtcp : public Module {
     *  intra_frame_callback - Called when the receiver request a intra frame.
     *  bandwidth_callback   - Called when we receive a changed estimate from
     *                         the receiver of out stream.
-    *  audio_messages       - Telehone events. May not be NULL; default callback
-    *                         will do nothing.
+    *  audio_messages       - Telephone events. May not be NULL; default
+    *                         callback will do nothing.
     *  remote_bitrate_estimator - Estimates the bandwidth available for a set of
     *                             streams from the same client.
     *  paced_sender             - Spread any bursts of packets into smaller
@@ -68,6 +68,8 @@ class RtpRtcp : public Module {
     RemoteBitrateEstimator* remote_bitrate_estimator;
     PacedSender* paced_sender;
     BitrateStatisticsObserver* send_bitrate_observer;
+    FrameCountObserver* send_frame_count_observer;
+    SendSideDelayObserver* send_side_delay_observer;
   };
 
   /*
@@ -340,10 +342,6 @@ class RtpRtcp : public Module {
 
     virtual int TimeToSendPadding(int bytes) = 0;
 
-    virtual void RegisterSendFrameCountObserver(
-        FrameCountObserver* observer) = 0;
-    virtual FrameCountObserver* GetSendFrameCountObserver() const = 0;
-
     virtual bool GetSendSideDelay(int* avg_send_delay_ms,
                                   int* max_send_delay_ms) const = 0;
 
@@ -379,13 +377,6 @@ class RtpRtcp : public Module {
     *   return -1 on failure else 0
     */
     virtual int32_t SetCNAME(const char cName[RTCP_CNAME_SIZE]) = 0;
-
-    /*
-    *   Get RTCP CName (i.e unique identifier)
-    *
-    *   return -1 on failure else 0
-    */
-    virtual int32_t CNAME(char cName[RTCP_CNAME_SIZE]) = 0;
 
     /*
     *   Get remote CName

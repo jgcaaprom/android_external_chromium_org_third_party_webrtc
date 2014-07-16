@@ -27,6 +27,7 @@
 #include "webrtc/system_wrappers/interface/scoped_vector.h"
 #include "webrtc/system_wrappers/interface/sleep.h"
 #include "webrtc/system_wrappers/interface/thread_wrapper.h"
+#include "webrtc/system_wrappers/interface/logging.h"
 #include "webrtc/test/call_test.h"
 #include "webrtc/test/configurable_frame_size_encoder.h"
 #include "webrtc/test/null_transport.h"
@@ -924,8 +925,6 @@ TEST_F(VideoSendStreamTest, NoPaddingWhenVideoIsMuted) {
 }
 
 TEST_F(VideoSendStreamTest, ProducesStats) {
-  static const std::string kCName =
-      "PjQatC14dGfbVwGPUOA9IH7RlsFDbWl4AhXEiDsBizo=";
   class ProducesStats : public test::SendTest {
    public:
     ProducesStats()
@@ -958,9 +957,8 @@ TEST_F(VideoSendStreamTest, ProducesStats) {
     bool CheckStats() {
       VideoSendStream::Stats stats = stream_->GetStats();
       // Check that all applicable data sources have been used.
-      if (stats.input_frame_rate > 0 && stats.encode_frame_rate > 0 &&
-          stats.avg_delay_ms > 0 && stats.c_name == kCName &&
-          !stats.substreams.empty()) {
+      if (stats.input_frame_rate > 0 && stats.encode_frame_rate > 0
+          && !stats.substreams.empty()) {
         uint32_t ssrc = stats.substreams.begin()->first;
         EXPECT_NE(
             config_.rtp.ssrcs.end(),
@@ -970,7 +968,8 @@ TEST_F(VideoSendStreamTest, ProducesStats) {
         // data is received from remote side. Tested in call tests instead.
         const StreamStats& entry = stats.substreams[ssrc];
         if (entry.key_frames > 0u && entry.bitrate_bps > 0 &&
-            entry.rtp_stats.packets > 0u) {
+            entry.rtp_stats.packets > 0u && entry.avg_delay_ms > 0 &&
+            entry.max_delay_ms > 0) {
           return true;
         }
       }
@@ -983,7 +982,6 @@ TEST_F(VideoSendStreamTest, ProducesStats) {
         VideoSendStream::Config* send_config,
         std::vector<VideoReceiveStream::Config>* receive_configs,
         std::vector<VideoStream>* video_streams) OVERRIDE {
-      send_config->rtp.c_name = kCName;
       SetConfig(*send_config);
     }
 
@@ -1367,6 +1365,75 @@ TEST_F(VideoSendStreamTest, EncoderIsProperlyInitializedAndDestroyed) {
 
   EXPECT_TRUE(test_encoder.IsReleased());
   EXPECT_EQ(1u, test_encoder.num_releases());
+}
+
+TEST_F(VideoSendStreamTest, EncoderSetupPropagatesVp8Config) {
+  class VideoCodecConfigObserver : public test::SendTest,
+                                   public test::FakeEncoder {
+   public:
+    VideoCodecConfigObserver()
+        : SendTest(kDefaultTimeoutMs),
+          FakeEncoder(Clock::GetRealTimeClock()),
+          num_initializations_(0) {
+      memset(&vp8_settings_, 0, sizeof(vp8_settings_));
+    }
+
+   private:
+    virtual void ModifyConfigs(
+        VideoSendStream::Config* send_config,
+        std::vector<VideoReceiveStream::Config>* receive_configs,
+        std::vector<VideoStream>* video_streams) OVERRIDE {
+      send_config->encoder_settings.encoder = this;
+      send_config->encoder_settings.payload_name = "VP8";
+
+      video_streams_ = *video_streams;
+    }
+
+    virtual void OnStreamsCreated(
+        VideoSendStream* send_stream,
+        const std::vector<VideoReceiveStream*>& receive_streams) OVERRIDE {
+      stream_ = send_stream;
+    }
+
+    virtual int32_t InitEncode(const VideoCodec* config,
+                               int32_t number_of_cores,
+                               uint32_t max_payload_size) OVERRIDE {
+      EXPECT_EQ(kVideoCodecVP8, config->codecType);
+      EXPECT_EQ(0,
+                memcmp(&config->codecSpecific.VP8,
+                       &vp8_settings_,
+                       sizeof(vp8_settings_)));
+      ++num_initializations_;
+      return FakeEncoder::InitEncode(config, number_of_cores, max_payload_size);
+    }
+
+    virtual void PerformTest() OVERRIDE {
+      EXPECT_EQ(1u, num_initializations_) << "VideoEncoder not initialized.";
+
+      vp8_settings_.denoisingOn = true;
+      stream_->ReconfigureVideoEncoder(video_streams_, &vp8_settings_);
+      EXPECT_EQ(2u, num_initializations_)
+          << "ReconfigureVideoEncoder did not reinitialize the encoder with "
+             "new encoder settings.";
+    }
+
+    int32_t Encode(
+        const I420VideoFrame& input_image,
+        const CodecSpecificInfo* codec_specific_info,
+        const std::vector<VideoFrameType>* frame_types) {
+      // Silently skip the encode, FakeEncoder::Encode doesn't produce VP8.
+      return 0;
+    }
+
+    virtual const void* GetEncoderSettings() OVERRIDE { return &vp8_settings_; }
+
+    VideoCodecVP8 vp8_settings_;
+    size_t num_initializations_;
+    VideoSendStream* stream_;
+    std::vector<VideoStream> video_streams_;
+  } test;
+
+  RunBaseTest(&test);
 }
 
 }  // namespace webrtc

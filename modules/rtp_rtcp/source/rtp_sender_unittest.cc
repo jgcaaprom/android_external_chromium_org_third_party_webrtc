@@ -62,13 +62,12 @@ uint64_t ConvertMsToAbsSendTime(int64_t time_ms) {
 class LoopbackTransportTest : public webrtc::Transport {
  public:
   LoopbackTransportTest()
-    : packets_sent_(0),
-      last_sent_packet_len_(0) {
-  }
+      : packets_sent_(0), last_sent_packet_len_(0), total_bytes_sent_(0) {}
   virtual int SendPacket(int channel, const void *data, int len) {
     packets_sent_++;
     memcpy(last_sent_packet_, data, len);
     last_sent_packet_len_ = len;
+    total_bytes_sent_ += static_cast<size_t>(len);
     return len;
   }
   virtual int SendRTCPPacket(int channel, const void *data, int len) {
@@ -76,6 +75,7 @@ class LoopbackTransportTest : public webrtc::Transport {
   }
   int packets_sent_;
   int last_sent_packet_len_;
+  size_t total_bytes_sent_;
   uint8_t last_sent_packet_[kMaxPacketLength];
 };
 
@@ -94,7 +94,7 @@ class RtpSenderTest : public ::testing::Test {
 
   virtual void SetUp() {
     rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_, NULL));
+                                    &mock_paced_sender_, NULL, NULL, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 
@@ -672,7 +672,7 @@ TEST_F(RtpSenderTest, SendPadding) {
 TEST_F(RtpSenderTest, SendRedundantPayloads) {
   MockTransport transport;
   rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport, NULL,
-                                  &mock_paced_sender_, NULL));
+                                  &mock_paced_sender_, NULL, NULL, NULL));
   rtp_sender_->SetSequenceNumber(kSeqNum);
   // Make all packets go through the pacer.
   EXPECT_CALL(mock_paced_sender_,
@@ -817,6 +817,9 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
     uint32_t delta_frames_;
   } callback;
 
+  rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
+                                  &mock_paced_sender_, NULL, &callback, NULL));
+
   char payload_name[RTP_PAYLOAD_NAME_SIZE] = "GENERIC";
   const uint8_t payload_type = 127;
   ASSERT_EQ(0, rtp_sender_->RegisterPayload(payload_name, payload_type, 90000,
@@ -824,8 +827,6 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
   uint8_t payload[] = {47, 11, 32, 93, 89};
   rtp_sender_->SetStorePacketsStatus(true, 1);
   uint32_t ssrc = rtp_sender_->SSRC();
-
-  rtp_sender_->RegisterFrameCountObserver(&callback);
 
   ASSERT_EQ(0, rtp_sender_->SendOutgoingData(kVideoFrameKey, payload_type, 1234,
                                              4321, payload, sizeof(payload),
@@ -845,7 +846,7 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
   EXPECT_EQ(1U, callback.key_frames_);
   EXPECT_EQ(1U, callback.delta_frames_);
 
-  rtp_sender_->RegisterFrameCountObserver(NULL);
+  rtp_sender_.reset();
 }
 
 TEST_F(RtpSenderTest, BitrateCallbacks) {
@@ -866,7 +867,7 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
     BitrateStatistics bitrate_;
   } callback;
   rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
-                                  &mock_paced_sender_, &callback));
+                                  &mock_paced_sender_, &callback, NULL, NULL));
 
   // Simulate kNumPackets sent with kPacketInterval ms intervals.
   const uint32_t kNumPackets = 15;
@@ -922,7 +923,7 @@ class RtpSenderAudioTest : public RtpSenderTest {
   virtual void SetUp() {
     payload_ = kAudioPayload;
     rtp_sender_.reset(new RTPSender(0, true, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_, NULL));
+                                    &mock_paced_sender_, NULL, NULL, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 };
@@ -1070,4 +1071,35 @@ TEST_F(RtpSenderAudioTest, SendAudioWithAudioLevelExtension) {
                       sizeof(extension)));
 }
 
+TEST_F(RtpSenderTest, BytesReportedCorrectly) {
+  const char* kPayloadName = "GENERIC";
+  const uint8_t kPayloadType = 127;
+  rtp_sender_->SetSSRC(1234);
+  rtp_sender_->SetRtxSsrc(4321);
+  rtp_sender_->SetRtxPayloadType(kPayloadType - 1);
+  rtp_sender_->SetRTXStatus(kRtxRetransmitted | kRtxRedundantPayloads);
+
+  ASSERT_EQ(
+      0,
+      rtp_sender_->RegisterPayload(kPayloadName, kPayloadType, 90000, 0, 1500));
+  uint8_t payload[] = {47, 11, 32, 93, 89};
+
+  ASSERT_EQ(0,
+            rtp_sender_->SendOutgoingData(kVideoFrameKey,
+                                          kPayloadType,
+                                          1234,
+                                          4321,
+                                          payload,
+                                          sizeof(payload),
+                                          0));
+
+  EXPECT_GT(transport_.total_bytes_sent_, 0u);
+  EXPECT_EQ(transport_.total_bytes_sent_, rtp_sender_->Bytes());
+  size_t last_bytes_sent = transport_.total_bytes_sent_;
+
+  rtp_sender_->TimeToSendPadding(42);
+
+  EXPECT_GT(transport_.total_bytes_sent_, last_bytes_sent);
+  EXPECT_EQ(transport_.total_bytes_sent_, rtp_sender_->Bytes());
+}
 }  // namespace webrtc
