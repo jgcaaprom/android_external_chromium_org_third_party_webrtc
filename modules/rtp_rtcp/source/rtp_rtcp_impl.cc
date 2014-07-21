@@ -37,20 +37,22 @@ RtpRtcp::Configuration::Configuration()
       rtt_stats(NULL),
       audio_messages(NullObjectRtpAudioFeedback()),
       remote_bitrate_estimator(NULL),
-      paced_sender(NULL) {
+      paced_sender(NULL),
+      send_bitrate_observer(NULL),
+      send_frame_count_observer(NULL),
+      send_side_delay_observer(NULL) {
 }
 
 RtpRtcp* RtpRtcp::CreateRtpRtcp(const RtpRtcp::Configuration& configuration) {
   if (configuration.clock) {
     return new ModuleRtpRtcpImpl(configuration);
   } else {
+    // No clock implementation provided, use default clock.
     RtpRtcp::Configuration configuration_copy;
     memcpy(&configuration_copy, &configuration,
            sizeof(RtpRtcp::Configuration));
     configuration_copy.clock = Clock::GetRealTimeClock();
-    ModuleRtpRtcpImpl* rtp_rtcp_instance =
-        new ModuleRtpRtcpImpl(configuration_copy);
-    return rtp_rtcp_instance;
+    return new ModuleRtpRtcpImpl(configuration_copy);
   }
 }
 
@@ -60,7 +62,10 @@ ModuleRtpRtcpImpl::ModuleRtpRtcpImpl(const Configuration& configuration)
                   configuration.clock,
                   configuration.outgoing_transport,
                   configuration.audio_messages,
-                  configuration.paced_sender),
+                  configuration.paced_sender,
+                  configuration.send_bitrate_observer,
+                  configuration.send_frame_count_observer,
+                  configuration.send_side_delay_observer),
       rtcp_sender_(configuration.id,
                    configuration.audio,
                    configuration.clock,
@@ -80,7 +85,7 @@ ModuleRtpRtcpImpl::ModuleRtpRtcpImpl(const Configuration& configuration)
           CriticalSectionWrapper::CreateCriticalSection()),
       default_module_(
           static_cast<ModuleRtpRtcpImpl*>(configuration.default_module)),
-      padding_index_(-1),  // Start padding at the first child module.
+      padding_index_(static_cast<size_t>(-1)),  // Start padding at first child.
       nack_method_(kNackOff),
       nack_last_time_sent_full_(0),
       nack_last_seq_number_sent_(0),
@@ -331,6 +336,42 @@ int32_t ModuleRtpRtcpImpl::SetSequenceNumber(
     const uint16_t seq_num) {
   rtp_sender_.SetSequenceNumber(seq_num);
   return 0;  // TODO(pwestin): change to void.
+}
+
+void ModuleRtpRtcpImpl::SetRtpStateForSsrc(uint32_t ssrc,
+                                           const RtpState& rtp_state) {
+  if (rtp_sender_.SSRC() == ssrc) {
+    rtp_sender_.SetRtpState(rtp_state);
+    return;
+  }
+  if (rtp_sender_.RtxSsrc() == ssrc) {
+    rtp_sender_.SetRtxRtpState(rtp_state);
+    return;
+  }
+
+  CriticalSectionScoped lock(critical_section_module_ptrs_.get());
+  for (size_t i = 0; i < child_modules_.size(); ++i) {
+    child_modules_[i]->SetRtpStateForSsrc(ssrc, rtp_state);
+  }
+}
+
+bool ModuleRtpRtcpImpl::GetRtpStateForSsrc(uint32_t ssrc, RtpState* rtp_state) {
+  if (rtp_sender_.SSRC() == ssrc) {
+    *rtp_state = rtp_sender_.GetRtpState();
+    return true;
+  }
+
+  if (rtp_sender_.RtxSsrc() == ssrc) {
+    *rtp_state = rtp_sender_.GetRtxRtpState();
+    return true;
+  }
+
+  CriticalSectionScoped lock(critical_section_module_ptrs_.get());
+  for (size_t i = 0; i < child_modules_.size(); ++i) {
+    if (child_modules_[i]->GetRtpStateForSsrc(ssrc, rtp_state))
+      return true;
+  }
+  return false;
 }
 
 uint32_t ModuleRtpRtcpImpl::SSRC() const {
@@ -682,10 +723,6 @@ uint32_t ModuleRtpRtcpImpl::LastSendReport(
 
 int32_t ModuleRtpRtcpImpl::SetCNAME(const char c_name[RTCP_CNAME_SIZE]) {
   return rtcp_sender_.SetCNAME(c_name);
-}
-
-int32_t ModuleRtpRtcpImpl::CNAME(char c_name[RTCP_CNAME_SIZE]) {
-  return rtcp_sender_.CNAME(c_name);
 }
 
 int32_t ModuleRtpRtcpImpl::AddMixedCNAME(
@@ -1198,16 +1235,6 @@ void ModuleRtpRtcpImpl::BitrateSent(uint32_t* total_rate,
     *nack_rate = rtp_sender_.NackOverheadRate();
 }
 
-void ModuleRtpRtcpImpl::RegisterVideoBitrateObserver(
-    BitrateStatisticsObserver* observer) {
-  assert(!IsDefaultModule());
-  rtp_sender_.RegisterBitrateObserver(observer);
-}
-
-BitrateStatisticsObserver* ModuleRtpRtcpImpl::GetVideoBitrateObserver() const {
-  return rtp_sender_.GetBitrateObserver();
-}
-
 void ModuleRtpRtcpImpl::OnRequestIntraFrame() {
   RequestKeyFrame();
 }
@@ -1320,15 +1347,6 @@ void ModuleRtpRtcpImpl::RegisterSendChannelRtpStatisticsCallback(
 StreamDataCountersCallback*
     ModuleRtpRtcpImpl::GetSendChannelRtpStatisticsCallback() const {
   return rtp_sender_.GetRtpStatisticsCallback();
-}
-
-void ModuleRtpRtcpImpl::RegisterSendFrameCountObserver(
-    FrameCountObserver* observer) {
-  rtp_sender_.RegisterFrameCountObserver(observer);
-}
-
-FrameCountObserver* ModuleRtpRtcpImpl::GetSendFrameCountObserver() const {
-  return rtp_sender_.GetFrameCountObserver();
 }
 
 bool ModuleRtpRtcpImpl::IsDefaultModule() const {

@@ -3179,22 +3179,6 @@ Channel::SetRTCP_CNAME(const char cName[256])
 }
 
 int
-Channel::GetRTCP_CNAME(char cName[256])
-{
-    if (_rtpRtcpModule->CNAME(cName) != 0)
-    {
-        _engineStatisticsPtr->SetLastError(
-            VE_RTP_RTCP_MODULE_ERROR, kTraceError,
-            "GetRTCP_CNAME() failed to retrieve RTCP CNAME");
-        return -1;
-    }
-    WEBRTC_TRACE(kTraceStateInfo, kTraceVoice,
-                 VoEId(_instanceId, _channelId),
-                 "GetRTCP_CNAME() => cName=%s", cName);
-    return 0;
-}
-
-int
 Channel::GetRemoteRTCP_CNAME(char cName[256])
 {
     if (cName == NULL)
@@ -3781,7 +3765,7 @@ Channel::PrepareEncodeAndSend(int mixingFrequency)
     {
         WEBRTC_TRACE(kTraceWarning, kTraceVoice, VoEId(_instanceId,_channelId),
                      "Channel::PrepareEncodeAndSend() invalid audio frame");
-        return -1;
+        return 0xFFFFFFFF;
     }
 
     if (channel_state_.Get().input_file_playing)
@@ -3835,7 +3819,7 @@ Channel::EncodeAndSend()
     {
         WEBRTC_TRACE(kTraceWarning, kTraceVoice, VoEId(_instanceId,_channelId),
                      "Channel::EncodeAndSend() invalid audio frame");
-        return -1;
+        return 0xFFFFFFFF;
     }
 
     _audioFrame.id_ = _channelId;
@@ -3848,7 +3832,7 @@ Channel::EncodeAndSend()
     {
         WEBRTC_TRACE(kTraceError, kTraceVoice, VoEId(_instanceId,_channelId),
                      "Channel::EncodeAndSend() ACM encoding failed");
-        return -1;
+        return 0xFFFFFFFF;
     }
 
     _timeStamp += _audioFrame.samples_per_channel_;
@@ -4198,7 +4182,7 @@ Channel::MixOrReplaceAudioWithFile(int mixingFrequency)
         // Currently file stream is always mono.
         // TODO(xians): Change the code when FilePlayer supports real stereo.
         _audioFrame.UpdateFrame(_channelId,
-                                -1,
+                                0xFFFFFFFF,
                                 fileBuffer.get(),
                                 fileSamples,
                                 mixingFrequency,

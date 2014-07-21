@@ -73,6 +73,10 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
   // Set SequenceNumber, default is a random number.
   virtual int32_t SetSequenceNumber(const uint16_t seq) OVERRIDE;
 
+  virtual void SetRtpStateForSsrc(uint32_t ssrc,
+                                  const RtpState& rtp_state) OVERRIDE;
+  virtual bool GetRtpStateForSsrc(uint32_t ssrc, RtpState* rtp_state) OVERRIDE;
+
   virtual uint32_t SSRC() const OVERRIDE;
 
   // Configure SSRC, default is a random number.
@@ -143,9 +147,6 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
 
   // Set RTCP CName.
   virtual int32_t SetCNAME(const char c_name[RTCP_CNAME_SIZE]) OVERRIDE;
-
-  // Get RTCP CName.
-  virtual int32_t CNAME(char c_name[RTCP_CNAME_SIZE]) OVERRIDE;
 
   // Get remote CName.
   virtual int32_t RemoteCNAME(const uint32_t remote_ssrc,
@@ -340,11 +341,6 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
                            uint32_t* fec_rate,
                            uint32_t* nackRate) const OVERRIDE;
 
-  virtual void RegisterVideoBitrateObserver(BitrateStatisticsObserver* observer)
-      OVERRIDE;
-
-  virtual BitrateStatisticsObserver* GetVideoBitrateObserver() const OVERRIDE;
-
   virtual uint32_t SendTimeOfSendReport(const uint32_t send_report);
 
   virtual bool SendTimeOfXrRrReport(uint32_t mid_ntp, int64_t* time_ms) const;
@@ -373,10 +369,6 @@ class ModuleRtpRtcpImpl : public RtpRtcp {
   void OnReceivedNACK(const std::list<uint16_t>& nack_sequence_numbers);
 
   void OnRequestSendReport();
-
-  virtual void RegisterSendFrameCountObserver(
-      FrameCountObserver* observer) OVERRIDE;
-  virtual FrameCountObserver* GetSendFrameCountObserver() const OVERRIDE;
 
  protected:
   void RegisterChildModule(RtpRtcp* module);

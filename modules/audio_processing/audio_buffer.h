@@ -56,6 +56,7 @@ class AudioBuffer {
   int samples_per_split_channel() const;
   int samples_per_keyboard_channel() const;
 
+  // It can be assumed that channels are stored contiguously.
   int16_t* data(int channel);
   const int16_t* data(int channel) const;
   int16_t* low_pass_split_data(int channel);
@@ -69,8 +70,11 @@ class AudioBuffer {
   // Float versions of the accessors, with automatic conversion back and forth
   // as necessary. The range of the numbers are the same as for int16_t.
   float* data_f(int channel);
+  const float* data_f(int channel) const;
   float* low_pass_split_data_f(int channel);
+  const float* low_pass_split_data_f(int channel) const;
   float* high_pass_split_data_f(int channel);
+  const float* high_pass_split_data_f(int channel) const;
 
   const float* keyboard_data() const;
 

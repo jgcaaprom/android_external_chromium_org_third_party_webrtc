@@ -62,13 +62,12 @@ uint64_t ConvertMsToAbsSendTime(int64_t time_ms) {
 class LoopbackTransportTest : public webrtc::Transport {
  public:
   LoopbackTransportTest()
-    : packets_sent_(0),
-      last_sent_packet_len_(0) {
-  }
+      : packets_sent_(0), last_sent_packet_len_(0), total_bytes_sent_(0) {}
   virtual int SendPacket(int channel, const void *data, int len) {
     packets_sent_++;
     memcpy(last_sent_packet_, data, len);
     last_sent_packet_len_ = len;
+    total_bytes_sent_ += static_cast<size_t>(len);
     return len;
   }
   virtual int SendRTCPPacket(int channel, const void *data, int len) {
@@ -76,6 +75,7 @@ class LoopbackTransportTest : public webrtc::Transport {
   }
   int packets_sent_;
   int last_sent_packet_len_;
+  size_t total_bytes_sent_;
   uint8_t last_sent_packet_[kMaxPacketLength];
 };
 
@@ -94,7 +94,7 @@ class RtpSenderTest : public ::testing::Test {
 
   virtual void SetUp() {
     rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_));
+                                    &mock_paced_sender_, NULL, NULL, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 
@@ -204,7 +204,7 @@ TEST_F(RtpSenderTest, BuildRTPPacket) {
   EXPECT_EQ(kRtpHeaderSize, length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   const bool valid_rtp_header = rtp_parser.Parse(rtp_header, NULL);
@@ -235,7 +235,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithTransmissionOffsetExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -276,7 +276,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithNegativeTransmissionOffsetExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -306,7 +306,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithAbsoluteSendTimeExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   RtpHeaderExtensionMap map;
@@ -344,7 +344,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithAudioLevelExtension) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   // Updating audio level is done in RTPSenderAudio, so simulate it here.
@@ -394,7 +394,7 @@ TEST_F(RtpSenderTest, BuildRTPPacketWithHeaderExtensions) {
       length);
 
   // Verify
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(packet_, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(packet_, length);
   webrtc::RTPHeader rtp_header;
 
   // Updating audio level is done in RTPSenderAudio, so simulate it here.
@@ -471,8 +471,8 @@ TEST_F(RtpSenderTest, TrafficSmoothingWithExtensions) {
   EXPECT_EQ(1, transport_.packets_sent_);
   EXPECT_EQ(rtp_length, transport_.last_sent_packet_len_);
   // Parse sent packet.
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(
-      transport_.last_sent_packet_, rtp_length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                                 rtp_length);
   webrtc::RTPHeader rtp_header;
   RtpHeaderExtensionMap map;
   map.Register(kRtpExtensionTransmissionTimeOffset,
@@ -533,8 +533,8 @@ TEST_F(RtpSenderTest, TrafficSmoothingRetransmits) {
   EXPECT_EQ(rtp_length, transport_.last_sent_packet_len_);
 
   // Parse sent packet.
-  webrtc::ModuleRTPUtility::RTPHeaderParser rtp_parser(
-      transport_.last_sent_packet_, rtp_length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                                 rtp_length);
   webrtc::RTPHeader rtp_header;
   RtpHeaderExtensionMap map;
   map.Register(kRtpExtensionTransmissionTimeOffset,
@@ -672,7 +672,7 @@ TEST_F(RtpSenderTest, SendPadding) {
 TEST_F(RtpSenderTest, SendRedundantPayloads) {
   MockTransport transport;
   rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport, NULL,
-                                  &mock_paced_sender_));
+                                  &mock_paced_sender_, NULL, NULL, NULL));
   rtp_sender_->SetSequenceNumber(kSeqNum);
   // Make all packets go through the pacer.
   EXPECT_CALL(mock_paced_sender_,
@@ -744,8 +744,8 @@ TEST_F(RtpSenderTest, SendGenericVideo) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
@@ -770,8 +770,8 @@ TEST_F(RtpSenderTest, SendGenericVideo) {
                                              1234, 4321, payload,
                                              sizeof(payload), NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser2(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser2(transport_.last_sent_packet_,
+                                          transport_.last_sent_packet_len_);
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
   payload_data = GetPayloadData(rtp_header, transport_.last_sent_packet_);
@@ -817,6 +817,9 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
     uint32_t delta_frames_;
   } callback;
 
+  rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
+                                  &mock_paced_sender_, NULL, &callback, NULL));
+
   char payload_name[RTP_PAYLOAD_NAME_SIZE] = "GENERIC";
   const uint8_t payload_type = 127;
   ASSERT_EQ(0, rtp_sender_->RegisterPayload(payload_name, payload_type, 90000,
@@ -824,8 +827,6 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
   uint8_t payload[] = {47, 11, 32, 93, 89};
   rtp_sender_->SetStorePacketsStatus(true, 1);
   uint32_t ssrc = rtp_sender_->SSRC();
-
-  rtp_sender_->RegisterFrameCountObserver(&callback);
 
   ASSERT_EQ(0, rtp_sender_->SendOutgoingData(kVideoFrameKey, payload_type, 1234,
                                              4321, payload, sizeof(payload),
@@ -845,7 +846,7 @@ TEST_F(RtpSenderTest, FrameCountCallbacks) {
   EXPECT_EQ(1U, callback.key_frames_);
   EXPECT_EQ(1U, callback.delta_frames_);
 
-  rtp_sender_->RegisterFrameCountObserver(NULL);
+  rtp_sender_.reset();
 }
 
 TEST_F(RtpSenderTest, BitrateCallbacks) {
@@ -865,6 +866,8 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
     uint32_t ssrc_;
     BitrateStatistics bitrate_;
   } callback;
+  rtp_sender_.reset(new RTPSender(0, false, &fake_clock_, &transport_, NULL,
+                                  &mock_paced_sender_, &callback, NULL, NULL));
 
   // Simulate kNumPackets sent with kPacketInterval ms intervals.
   const uint32_t kNumPackets = 15;
@@ -880,8 +883,6 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
   uint8_t payload[] = {47, 11, 32, 93, 89};
   rtp_sender_->SetStorePacketsStatus(true, 1);
   uint32_t ssrc = rtp_sender_->SSRC();
-
-  rtp_sender_->RegisterBitrateObserver(&callback);
 
   // Initial process call so we get a new time window.
   rtp_sender_->ProcessBitrate();
@@ -912,7 +913,7 @@ TEST_F(RtpSenderTest, BitrateCallbacks) {
   EXPECT_EQ((kPacketOverhead + sizeof(payload)) * 8 * expected_packet_rate,
             callback.bitrate_.bitrate_bps);
 
-  rtp_sender_->RegisterBitrateObserver(NULL);
+  rtp_sender_.reset();
 }
 
 class RtpSenderAudioTest : public RtpSenderTest {
@@ -922,7 +923,7 @@ class RtpSenderAudioTest : public RtpSenderTest {
   virtual void SetUp() {
     payload_ = kAudioPayload;
     rtp_sender_.reset(new RTPSender(0, true, &fake_clock_, &transport_, NULL,
-                                    &mock_paced_sender_));
+                                    &mock_paced_sender_, NULL, NULL, NULL));
     rtp_sender_->SetSequenceNumber(kSeqNum);
   }
 };
@@ -1018,8 +1019,8 @@ TEST_F(RtpSenderAudioTest, SendAudio) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
@@ -1047,8 +1048,8 @@ TEST_F(RtpSenderAudioTest, SendAudioWithAudioLevelExtension) {
                                              4321, payload, sizeof(payload),
                                              NULL));
 
-  ModuleRTPUtility::RTPHeaderParser rtp_parser(transport_.last_sent_packet_,
-      transport_.last_sent_packet_len_);
+  RtpUtility::RtpHeaderParser rtp_parser(transport_.last_sent_packet_,
+                                         transport_.last_sent_packet_len_);
   webrtc::RTPHeader rtp_header;
   ASSERT_TRUE(rtp_parser.Parse(rtp_header));
 
@@ -1070,4 +1071,35 @@ TEST_F(RtpSenderAudioTest, SendAudioWithAudioLevelExtension) {
                       sizeof(extension)));
 }
 
+TEST_F(RtpSenderTest, BytesReportedCorrectly) {
+  const char* kPayloadName = "GENERIC";
+  const uint8_t kPayloadType = 127;
+  rtp_sender_->SetSSRC(1234);
+  rtp_sender_->SetRtxSsrc(4321);
+  rtp_sender_->SetRtxPayloadType(kPayloadType - 1);
+  rtp_sender_->SetRTXStatus(kRtxRetransmitted | kRtxRedundantPayloads);
+
+  ASSERT_EQ(
+      0,
+      rtp_sender_->RegisterPayload(kPayloadName, kPayloadType, 90000, 0, 1500));
+  uint8_t payload[] = {47, 11, 32, 93, 89};
+
+  ASSERT_EQ(0,
+            rtp_sender_->SendOutgoingData(kVideoFrameKey,
+                                          kPayloadType,
+                                          1234,
+                                          4321,
+                                          payload,
+                                          sizeof(payload),
+                                          0));
+
+  EXPECT_GT(transport_.total_bytes_sent_, 0u);
+  EXPECT_EQ(transport_.total_bytes_sent_, rtp_sender_->Bytes());
+  size_t last_bytes_sent = transport_.total_bytes_sent_;
+
+  rtp_sender_->TimeToSendPadding(42);
+
+  EXPECT_GT(transport_.total_bytes_sent_, last_bytes_sent);
+  EXPECT_EQ(transport_.total_bytes_sent_, rtp_sender_->Bytes());
+}
 }  // namespace webrtc

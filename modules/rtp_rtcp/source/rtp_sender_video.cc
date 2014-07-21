@@ -84,18 +84,20 @@ int32_t RTPSenderVideo::RegisterVideoPayload(
     const char payloadName[RTP_PAYLOAD_NAME_SIZE],
     const int8_t payloadType,
     const uint32_t maxBitRate,
-    ModuleRTPUtility::Payload*& payload) {
+    RtpUtility::Payload*& payload) {
   CriticalSectionScoped cs(_sendVideoCritsect);
 
   RtpVideoCodecTypes videoType = kRtpVideoGeneric;
-  if (ModuleRTPUtility::StringCompare(payloadName, "VP8",3)) {
+  if (RtpUtility::StringCompare(payloadName, "VP8", 3)) {
     videoType = kRtpVideoVp8;
-  } else if (ModuleRTPUtility::StringCompare(payloadName, "I420", 4)) {
+  } else if (RtpUtility::StringCompare(payloadName, "H264", 4)) {
+    videoType = kRtpVideoH264;
+  } else if (RtpUtility::StringCompare(payloadName, "I420", 4)) {
     videoType = kRtpVideoGeneric;
   } else {
     videoType = kRtpVideoGeneric;
   }
-  payload = new ModuleRTPUtility::Payload;
+  payload = new RtpUtility::Payload;
   payload->name[RTP_PAYLOAD_NAME_SIZE - 1] = 0;
   strncpy(payload->name, payloadName, RTP_PAYLOAD_NAME_SIZE - 1);
   payload->typeSpecific.Video.videoCodecType = videoType;
@@ -211,7 +213,7 @@ RTPSenderVideo::SendRTPIntraRequest()
     data[2] = 0;
     data[3] = 1; // length
 
-    ModuleRTPUtility::AssignUWord32ToBuffer(data+4, _rtpSender.SSRC());
+    RtpUtility::AssignUWord32ToBuffer(data + 4, _rtpSender.SSRC());
 
     TRACE_EVENT_INSTANT1("webrtc_rtp",
                          "Video::IntraRequest",
@@ -432,17 +434,18 @@ RTPSenderVideo::SendVP8(const FrameType frameType,
     if (rtpTypeHdr->VP8.temporalIdx == 0 &&
         !(_retransmissionSettings & kRetransmitBaseLayer)) {
       storage = kDontRetransmit;
-    }
-    if (rtpTypeHdr->VP8.temporalIdx > 0 &&
+    } else if (rtpTypeHdr->VP8.temporalIdx != kNoTemporalIdx &&
         !(_retransmissionSettings & kRetransmitHigherLayers)) {
       storage = kDontRetransmit;
     }
 
     bool last = false;
     _numberFirstPartition = 0;
-    // |rtpTypeHdr->VP8.temporalIdx| is zero for base layers, or -1 if the field
-    // isn't used. We currently only protect base layers.
-    bool protect = (rtpTypeHdr->VP8.temporalIdx < 1);
+    // |rtpTypeHdr->VP8.temporalIdx| is zero for base layers, or kNoTemporalIdx
+    // if the field isn't used (so all layers are the base layer).  We currently
+    // only protect base layers, so look for these two cases.
+    bool protect = rtpTypeHdr->VP8.temporalIdx == 0 ||
+        rtpTypeHdr->VP8.temporalIdx == kNoTemporalIdx;
     while (!last)
     {
         // Write VP8 Payload Descriptor and VP8 payload.

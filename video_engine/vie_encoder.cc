@@ -23,6 +23,7 @@
 #include "webrtc/modules/video_coding/main/interface/video_coding.h"
 #include "webrtc/modules/video_coding/main/interface/video_coding_defines.h"
 #include "webrtc/modules/video_coding/main/source/encoded_frame.h"
+#include "webrtc/system_wrappers/interface/clock.h"
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/interface/logging.h"
 #include "webrtc/system_wrappers/interface/tick_util.h"
@@ -33,16 +34,6 @@
 #include "webrtc/video_engine/vie_defines.h"
 
 namespace webrtc {
-
-// Pace in kbits/s until we receive first estimate.
-static const int kInitialPace = 2000;
-
-// Pacing-rate relative to our target send rate.
-// Multiplicative factor that is applied to the target bitrate to calculate the
-// number of bytes that can be transmitted per interval.
-// Increasing this factor will result in lower delays in cases of bitrate
-// overshoots from the encoder.
-static const float kPaceMultiplier = 2.5f;
 
 // Margin on when we pause the encoder when the pacing buffer overflows relative
 // to the configured buffer delay.
@@ -172,7 +163,8 @@ ViEEncoder::ViEEncoder(int32_t engine_id,
   bitrate_observer_.reset(new ViEBitrateObserver(this));
   pacing_callback_.reset(new ViEPacedSenderCallback(this));
   paced_sender_.reset(
-      new PacedSender(pacing_callback_.get(), kInitialPace, kPaceMultiplier));
+      new PacedSender(Clock::GetRealTimeClock(), pacing_callback_.get(),
+                      PacedSender::kDefaultInitialPaceKbps, 0));
 }
 
 bool ViEEncoder::Init() {
@@ -383,8 +375,9 @@ int32_t ViEEncoder::SetEncoder(const webrtc::VideoCodec& video_codec) {
   if (pad_up_to_bitrate_kbps < min_transmit_bitrate_kbps_)
     pad_up_to_bitrate_kbps = min_transmit_bitrate_kbps_;
 
-  paced_sender_->UpdateBitrate(kPaceMultiplier * video_codec.startBitrate,
-                               pad_up_to_bitrate_kbps);
+  paced_sender_->UpdateBitrate(
+      PacedSender::kDefaultPaceMultiplier * video_codec.startBitrate,
+      pad_up_to_bitrate_kbps);
 
   return 0;
 }
@@ -487,10 +480,6 @@ void ViEEncoder::DeliverFrame(int id,
     }
     encoder_paused_and_dropped_frame_ = false;
   }
-  if (video_frame->native_handle() != NULL) {
-    // TODO(wuchengli): add texture support. http://crbug.com/362437
-    return;
-  }
 
   // Convert render time, in ms, to RTP timestamp.
   const int kMsToRtpTimestamp = 90;
@@ -501,22 +490,6 @@ void ViEEncoder::DeliverFrame(int id,
   TRACE_EVENT_ASYNC_STEP0("webrtc", "Video", video_frame->render_time_ms(),
                           "Encode");
   video_frame->set_timestamp(time_stamp);
-  {
-    CriticalSectionScoped cs(callback_cs_.get());
-    if (effect_filter_) {
-      unsigned int length = CalcBufferSize(kI420,
-                                           video_frame->width(),
-                                           video_frame->height());
-      scoped_ptr<uint8_t[]> video_buffer(new uint8_t[length]);
-      ExtractBuffer(*video_frame, length, video_buffer.get());
-      effect_filter_->Transform(length,
-                                video_buffer.get(),
-                                video_frame->ntp_time_ms(),
-                                video_frame->timestamp(),
-                                video_frame->width(),
-                                video_frame->height());
-    }
-  }
 
   // Make sure the CSRC list is correct.
   if (num_csrcs > 0) {
@@ -530,17 +503,37 @@ void ViEEncoder::DeliverFrame(int id,
     }
     default_rtp_rtcp_->SetCSRCs(tempCSRC, (uint8_t) num_csrcs);
   }
-  // Pass frame via preprocessor.
+
   I420VideoFrame* decimated_frame = NULL;
-  const int ret = vpm_.PreprocessFrame(*video_frame, &decimated_frame);
-  if (ret == 1) {
-    // Drop this frame.
-    return;
+  // TODO(wuchengli): support texture frames.
+  if (video_frame->native_handle() == NULL) {
+    {
+      CriticalSectionScoped cs(callback_cs_.get());
+      if (effect_filter_) {
+        unsigned int length =
+            CalcBufferSize(kI420, video_frame->width(), video_frame->height());
+        scoped_ptr<uint8_t[]> video_buffer(new uint8_t[length]);
+        ExtractBuffer(*video_frame, length, video_buffer.get());
+        effect_filter_->Transform(length,
+                                  video_buffer.get(),
+                                  video_frame->ntp_time_ms(),
+                                  video_frame->timestamp(),
+                                  video_frame->width(),
+                                  video_frame->height());
+      }
+    }
+
+    // Pass frame via preprocessor.
+    const int ret = vpm_.PreprocessFrame(*video_frame, &decimated_frame);
+    if (ret == 1) {
+      // Drop this frame.
+      return;
+    }
+    if (ret != VPM_OK) {
+      return;
+    }
   }
-  if (ret != VPM_OK) {
-    return;
-  }
-  // Frame was not sampled => use original.
+  // If the frame was not resampled or scaled => use original.
   if (decimated_frame == NULL)  {
     decimated_frame = video_frame;
   }
@@ -551,20 +544,28 @@ void ViEEncoder::DeliverFrame(int id,
       pre_encode_callback_->FrameCallback(decimated_frame);
   }
 
+  if (video_frame->native_handle() != NULL) {
+    // TODO(wuchengli): add texture support. http://crbug.com/362437
+    return;
+  }
+
 #ifdef VIDEOCODEC_VP8
   if (vcm_.SendCodec() == webrtc::kVideoCodecVP8) {
     webrtc::CodecSpecificInfo codec_specific_info;
     codec_specific_info.codecType = webrtc::kVideoCodecVP8;
-    codec_specific_info.codecSpecific.VP8.hasReceivedRPSI =
-        has_received_rpsi_;
-    codec_specific_info.codecSpecific.VP8.hasReceivedSLI =
-        has_received_sli_;
-    codec_specific_info.codecSpecific.VP8.pictureIdRPSI =
-        picture_id_rpsi_;
-    codec_specific_info.codecSpecific.VP8.pictureIdSLI  =
-        picture_id_sli_;
-    has_received_sli_ = false;
-    has_received_rpsi_ = false;
+    {
+      CriticalSectionScoped cs(data_cs_.get());
+      codec_specific_info.codecSpecific.VP8.hasReceivedRPSI =
+          has_received_rpsi_;
+      codec_specific_info.codecSpecific.VP8.hasReceivedSLI =
+          has_received_sli_;
+      codec_specific_info.codecSpecific.VP8.pictureIdRPSI =
+          picture_id_rpsi_;
+      codec_specific_info.codecSpecific.VP8.pictureIdSLI  =
+          picture_id_sli_;
+      has_received_sli_ = false;
+      has_received_rpsi_ = false;
+    }
 
     vcm_.AddVideoFrame(*decimated_frame, vpm_.ContentMetrics(),
                        &codec_specific_info);
@@ -746,12 +747,14 @@ int32_t ViEEncoder::RegisterCodecObserver(ViEEncoderObserver* observer) {
 
 void ViEEncoder::OnReceivedSLI(uint32_t /*ssrc*/,
                                uint8_t picture_id) {
+  CriticalSectionScoped cs(data_cs_.get());
   picture_id_sli_ = picture_id;
   has_received_sli_ = true;
 }
 
 void ViEEncoder::OnReceivedRPSI(uint32_t /*ssrc*/,
                                 uint64_t picture_id) {
+  CriticalSectionScoped cs(data_cs_.get());
   picture_id_rpsi_ = picture_id;
   has_received_rpsi_ = true;
 }
@@ -889,8 +892,9 @@ void ViEEncoder::OnNetworkChanged(const uint32_t bitrate_bps,
     if (pad_up_to_bitrate_kbps > bitrate_kbps)
       pad_up_to_bitrate_kbps = bitrate_kbps;
 
-    paced_sender_->UpdateBitrate(kPaceMultiplier * bitrate_kbps,
-                                 pad_up_to_bitrate_kbps);
+    paced_sender_->UpdateBitrate(
+        PacedSender::kDefaultPaceMultiplier * bitrate_kbps,
+        pad_up_to_bitrate_kbps);
     default_rtp_rtcp_->SetTargetSendBitrate(stream_bitrates);
     if (video_suspended_ == video_is_suspended)
       return;
