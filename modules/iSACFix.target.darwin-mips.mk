@@ -48,8 +48,11 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_lag_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/spectrum_ar_model_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/filters_mips.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_mips.c
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_mips.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator_mips.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_mips.c
 
 
 # Flags passed to both C and C++ files.
@@ -113,7 +116,6 @@ MY_DEFS_Debug := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -238,7 +240,6 @@ MY_DEFS_Release := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \

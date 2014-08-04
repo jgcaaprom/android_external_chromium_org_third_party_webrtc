@@ -11,7 +11,8 @@ gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
 gyp_shared_intermediate_dir := $(call intermediates-dir-for,GYP,shared,,,$(GYP_VAR_PREFIX))
 
 # Make sure our deps are built first.
-GYP_TARGET_DEPENDENCIES :=
+GYP_TARGET_DEPENDENCIES := \
+	$(call intermediates-dir-for,GYP,third_party_openssl_openssl_gyp,,,$(GYP_VAR_PREFIX))/openssl.stamp
 
 GYP_GENERATED_OUTPUTS :=
 
@@ -38,6 +39,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/crc32.cc \
 	third_party/webrtc/base/diskcache.cc \
 	third_party/webrtc/base/event.cc \
+	third_party/webrtc/base/exp_filter.cc \
 	third_party/webrtc/base/fileutils.cc \
 	third_party/webrtc/base/firewallsocketserver.cc \
 	third_party/webrtc/base/flags.cc \
@@ -146,7 +148,6 @@ MY_DEFS_Debug := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -194,6 +195,7 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
 	$(LOCAL_PATH)/third_party/openssl/openssl/include \
+	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -261,7 +263,6 @@ MY_DEFS_Release := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -310,6 +311,7 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
 	$(LOCAL_PATH)/third_party/openssl/openssl/include \
+	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
