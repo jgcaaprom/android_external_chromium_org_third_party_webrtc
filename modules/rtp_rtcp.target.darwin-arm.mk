@@ -52,6 +52,8 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_receiver_strategy.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_receiver_video.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_sender_video.cc \
+	third_party/webrtc/modules/rtp_rtcp/source/rtp_format.cc \
+	third_party/webrtc/modules/rtp_rtcp/source/rtp_format_h264.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_format_vp8.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/vp8_partition_aggregator.cc
 
