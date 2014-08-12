@@ -30,6 +30,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/voice_engine/dtmf_inband_queue.cc \
 	third_party/webrtc/voice_engine/level_indicator.cc \
 	third_party/webrtc/voice_engine/monitor_module.cc \
+	third_party/webrtc/voice_engine/network_predictor.cc \
 	third_party/webrtc/voice_engine/output_mixer.cc \
 	third_party/webrtc/voice_engine/shared_data.cc \
 	third_party/webrtc/voice_engine/statistics.cc \
@@ -106,7 +107,6 @@ MY_DEFS_Debug := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -230,7 +230,6 @@ MY_DEFS_Release := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \

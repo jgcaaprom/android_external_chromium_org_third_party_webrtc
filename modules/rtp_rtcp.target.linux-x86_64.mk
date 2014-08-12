@@ -52,6 +52,8 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_receiver_strategy.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_receiver_video.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_sender_video.cc \
+	third_party/webrtc/modules/rtp_rtcp/source/rtp_format.cc \
+	third_party/webrtc/modules/rtp_rtcp/source/rtp_format_h264.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/rtp_format_vp8.cc \
 	third_party/webrtc/modules/rtp_rtcp/source/vp8_partition_aggregator.cc
 
@@ -115,7 +117,6 @@ MY_DEFS_Debug := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -230,7 +231,6 @@ MY_DEFS_Release := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \

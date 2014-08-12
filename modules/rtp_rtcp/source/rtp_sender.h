@@ -109,11 +109,8 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   void SetSendingMediaStatus(const bool enabled);
   bool SendingMedia() const;
 
-  // Number of sent RTP packets.
-  uint32_t Packets() const;
-
-  // Number of sent RTP bytes.
-  uint32_t Bytes() const;
+  void GetDataCounters(StreamDataCounters* rtp_stats,
+                       StreamDataCounters* rtx_stats) const;
 
   void ResetDataCounters();
 
@@ -270,9 +267,7 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   int SendPadData(int payload_type,
                   uint32_t timestamp,
                   int64_t capture_time_ms,
-                  int32_t bytes,
-                  bool force_full_size_packets,
-                  bool only_pad_after_markerbit);
+                  int32_t bytes);
 
   // Called on update of RTP statistics.
   void RegisterRtpStatisticsCallback(StreamDataCountersCallback* callback);
@@ -312,9 +307,6 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
 
   int SendRedundantPayloads(int payload_type, int bytes);
 
-  bool SendPaddingAccordingToBitrate(int8_t payload_type,
-                                     uint32_t capture_timestamp,
-                                     int64_t capture_time_ms);
   int BuildPaddingPacket(uint8_t* packet, int header_length, int32_t bytes);
 
   void BuildRtxPacket(uint8_t* buffer, uint16_t* length,
@@ -395,6 +387,7 @@ class RTPSender : public RTPSenderInterface, public Bitrate::Observer {
   uint32_t timestamp_ GUARDED_BY(send_critsect_);
   int64_t capture_time_ms_ GUARDED_BY(send_critsect_);
   int64_t last_timestamp_time_ms_ GUARDED_BY(send_critsect_);
+  bool media_has_been_sent_ GUARDED_BY(send_critsect_);
   bool last_packet_marker_bit_ GUARDED_BY(send_critsect_);
   uint8_t num_csrcs_ GUARDED_BY(send_critsect_);
   uint32_t csrcs_[kRtpCsrcSize] GUARDED_BY(send_critsect_);

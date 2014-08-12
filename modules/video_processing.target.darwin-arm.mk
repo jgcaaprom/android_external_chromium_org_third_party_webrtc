@@ -29,7 +29,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/video_processing/main/source/color_enhancement.cc \
 	third_party/webrtc/modules/video_processing/main/source/content_analysis.cc \
 	third_party/webrtc/modules/video_processing/main/source/deflickering.cc \
-	third_party/webrtc/modules/video_processing/main/source/denoising.cc \
 	third_party/webrtc/modules/video_processing/main/source/frame_preprocessor.cc \
 	third_party/webrtc/modules/video_processing/main/source/spatial_resampler.cc \
 	third_party/webrtc/modules/video_processing/main/source/video_decimator.cc \
@@ -101,7 +100,6 @@ MY_DEFS_Debug := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
@@ -231,7 +229,6 @@ MY_DEFS_Release := \
 	'-DSYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE' \
 	'-DENABLE_EGLIMAGE=1' \
 	'-DCLD_VERSION=1' \
-	'-DCLD_DATA_FROM_STATIC' \
 	'-DENABLE_PRINTING=1' \
 	'-DENABLE_MANAGED_USERS=1' \
 	'-DDATA_REDUCTION_FALLBACK_HOST="http://compress.googlezip.net:80/"' \
