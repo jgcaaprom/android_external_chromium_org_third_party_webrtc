@@ -433,7 +433,6 @@ void RunTest(std::string out_path) {
       printf("%i. Toggle receive-side NS \n", option_index++);
       printf("%i. AGC status \n", option_index++);
       printf("%i. Toggle microphone mute \n", option_index++);
-      printf("%i. Toggle on hold status \n", option_index++);
       printf("%i. Get last error code \n", option_index++);
       printf("%i. Toggle typing detection \n",
              option_index++);
@@ -446,6 +445,7 @@ void RunTest(std::string out_path) {
       printf("%i. Remove a file-playing channel \n", option_index++);
       printf("%i. Toggle Opus stereo (Opus must be selected again to apply "
              "the setting) \n", option_index++);
+      printf("%i. Set Opus maximum audio bandwidth \n", option_index++);
 
       printf("Select action or %i to stop the call: ", option_index);
       int option_selection;
@@ -758,6 +758,12 @@ void RunTest(std::string out_path) {
         else
           printf("\n Opus mono enabled (select Opus again to apply the "
                  "setting). \n");
+      } else if (option_selection == option_index++) {
+        printf("\n Input bandwidth in Hz: ");
+        int max_playback_rate;
+        ASSERT_EQ(1, scanf("%i", &max_playback_rate));
+        res = codec->SetOpusMaxBandwidth(chan, max_playback_rate);
+        VALIDATE;
       } else {
         break;
       }

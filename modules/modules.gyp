@@ -101,6 +101,7 @@
             '<(webrtc_root)/test/test.gyp:rtcp_packet_parser',
           ],
           'sources': [
+            'audio_coding/main/acm2/acm_opus_unittest.cc',
             'audio_coding/main/acm2/acm_receiver_unittest.cc',
             'audio_coding/main/acm2/audio_coding_module_unittest.cc',
             'audio_coding/main/acm2/call_statistics_unittest.cc',
@@ -242,10 +243,6 @@
             'video_coding/main/source/qm_select_unittest.cc',
             'video_coding/main/source/test/stream_generator.cc',
             'video_coding/main/source/test/stream_generator.h',
-            'video_coding/main/test/pcap_file_reader.cc',
-            'video_coding/main/test/pcap_file_reader_unittest.cc',
-            'video_coding/main/test/rtp_file_reader.cc',
-            'video_coding/main/test/rtp_file_reader_unittest.cc',
             'video_processing/main/test/unit_test/brightness_detection_test.cc',
             'video_processing/main/test/unit_test/color_enhancement_test.cc',
             'video_processing/main/test/unit_test/content_metrics_test.cc',

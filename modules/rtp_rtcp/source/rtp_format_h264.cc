@@ -29,6 +29,7 @@ enum Nalu {
 
 static const size_t kNalHeaderSize = 1;
 static const size_t kFuAHeaderSize = 2;
+static const size_t kLengthFieldSize = 2;
 
 // Bit masks for FU (A and B) indicators.
 enum NalDefs { kFBit = 0x80, kNriMask = 0x60, kTypeMask = 0x1F };
@@ -45,16 +46,16 @@ void ParseSingleNalu(WebRtcRTPHeader* rtp_header,
   h264_header->single_nalu = true;
   h264_header->stap_a = false;
 
-  uint8_t nal_type = payload_data[0] & NalDefs::kTypeMask;
-  if (nal_type == Nalu::kStapA) {
-    nal_type = payload_data[3] & NalDefs::kTypeMask;
+  uint8_t nal_type = payload_data[0] & kTypeMask;
+  if (nal_type == kStapA) {
+    nal_type = payload_data[3] & kTypeMask;
     h264_header->stap_a = true;
   }
 
   switch (nal_type) {
-    case Nalu::kSps:
-    case Nalu::kPps:
-    case Nalu::kIdr:
+    case kSps:
+    case kPps:
+    case kIdr:
       rtp_header->frameType = kVideoFrameKey;
       break;
     default:
@@ -67,9 +68,9 @@ void ParseFuaNalu(WebRtcRTPHeader* rtp_header,
                   const uint8_t* payload_data,
                   size_t payload_data_length,
                   size_t* offset) {
-  uint8_t fnri = payload_data[0] & (NalDefs::kFBit | NalDefs::kNriMask);
-  uint8_t original_nal_type = payload_data[1] & NalDefs::kTypeMask;
-  bool first_fragment = (payload_data[1] & FuDefs::kSBit) > 0;
+  uint8_t fnri = payload_data[0] & (kFBit | kNriMask);
+  uint8_t original_nal_type = payload_data[1] & kTypeMask;
+  bool first_fragment = (payload_data[1] & kSBit) > 0;
 
   uint8_t original_nal_header = fnri | original_nal_type;
   if (first_fragment) {
@@ -80,7 +81,7 @@ void ParseFuaNalu(WebRtcRTPHeader* rtp_header,
     *offset = kFuAHeaderSize;
   }
 
-  if (original_nal_type == Nalu::kIdr) {
+  if (original_nal_type == kIdr) {
     rtp_header->frameType = kVideoFrameKey;
   } else {
     rtp_header->frameType = kVideoFrameDelta;
@@ -157,30 +158,34 @@ int RtpPacketizerH264::PacketizeStapA(size_t fragment_index,
   // Aggregate fragments into one packet (STAP-A).
   size_t payload_size_left = max_payload_len_;
   int aggregated_fragments = 0;
+  size_t fragment_headers_length = 0;
   assert(payload_size_left >= fragment_length);
-  while (payload_size_left >= fragment_length) {
-    if (fragment_length > 0) {
-      assert(fragment_length > 0);
-      uint8_t header = payload_data_[fragment_offset];
-      packets_.push(Packet(fragment_offset,
-                           fragment_length,
-                           aggregated_fragments == 0,
-                           false,
-                           true,
-                           header));
-      // If we are going to try to aggregate more fragments into this packet
-      // we need to add the STAP-A NALU header.
-      if (aggregated_fragments == 0)
-        payload_size_left -= kNalHeaderSize;
-      payload_size_left -= fragment_length;
-      ++aggregated_fragments;
-    }
+  while (payload_size_left >= fragment_length + fragment_headers_length) {
+    assert(fragment_length > 0);
+    uint8_t header = payload_data_[fragment_offset];
+    packets_.push(Packet(fragment_offset,
+                         fragment_length,
+                         aggregated_fragments == 0,
+                         false,
+                         true,
+                         header));
+    payload_size_left -= fragment_length;
+    payload_size_left -= fragment_headers_length;
+
     // Next fragment.
     ++fragment_index;
     if (fragment_index == fragmentation_.fragmentationVectorSize)
       break;
     fragment_offset = fragmentation_.fragmentationOffset[fragment_index];
     fragment_length = fragmentation_.fragmentationLength[fragment_index];
+
+    fragment_headers_length = kLengthFieldSize;
+    // If we are going to try to aggregate more fragments into this packet
+    // we need to add the STAP-A NALU header and a length field for the first
+    // NALU of this packet.
+    if (aggregated_fragments == 0)
+      fragment_headers_length += kNalHeaderSize + kLengthFieldSize;
+    ++aggregated_fragments;
   }
   packets_.back().last_fragment = true;
   return fragment_index;
@@ -203,13 +208,15 @@ bool RtpPacketizerH264::NextPacket(uint8_t* buffer,
     *bytes_to_send = packet.size;
     memcpy(buffer, &payload_data_[packet.offset], packet.size);
     packets_.pop();
+    assert(*bytes_to_send <= max_payload_len_);
   } else if (packet.aggregated) {
     NextAggregatePacket(buffer, bytes_to_send);
+    assert(*bytes_to_send <= max_payload_len_);
   } else {
     NextFragmentPacket(buffer, bytes_to_send);
+    assert(*bytes_to_send <= max_payload_len_);
   }
   *last_packet = packets_.empty();
-  assert(*bytes_to_send <= max_payload_len_);
   return true;
 }
 
@@ -224,8 +231,8 @@ void RtpPacketizerH264::NextAggregatePacket(uint8_t* buffer,
   while (packet.aggregated) {
     // Add NAL unit length field.
     RtpUtility::AssignUWord16ToBuffer(&buffer[index], packet.size);
-    index += 2;
-    *bytes_to_send += 2;
+    index += kLengthFieldSize;
+    *bytes_to_send += kLengthFieldSize;
     // Add NAL unit.
     memcpy(&buffer[index], &payload_data_[packet.offset], packet.size);
     index += packet.size;
@@ -272,9 +279,9 @@ RtpDepacketizerH264::RtpDepacketizerH264(RtpData* const callback)
 bool RtpDepacketizerH264::Parse(WebRtcRTPHeader* rtp_header,
                                 const uint8_t* payload_data,
                                 size_t payload_data_length) {
-  uint8_t nal_type = payload_data[0] & NalDefs::kTypeMask;
+  uint8_t nal_type = payload_data[0] & kTypeMask;
   size_t offset = 0;
-  if (nal_type == Nalu::kFuA) {
+  if (nal_type == kFuA) {
     // Fragmented NAL units (FU-A).
     ParseFuaNalu(rtp_header, payload_data, payload_data_length, &offset);
   } else {
