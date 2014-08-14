@@ -11,8 +11,7 @@ gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
 gyp_shared_intermediate_dir := $(call intermediates-dir-for,GYP,shared,,,$(GYP_VAR_PREFIX))
 
 # Make sure our deps are built first.
-GYP_TARGET_DEPENDENCIES := \
-	$(call intermediates-dir-for,GYP,third_party_openssl_openssl_gyp,,,$(GYP_VAR_PREFIX))/openssl.stamp
+GYP_TARGET_DEPENDENCIES :=
 
 GYP_GENERATED_OUTPUTS :=
 
@@ -199,7 +198,6 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/openssl/openssl/include \
 	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
@@ -320,7 +318,6 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/openssl/openssl/include \
 	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
