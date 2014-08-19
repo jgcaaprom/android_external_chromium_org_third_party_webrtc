@@ -11,8 +11,7 @@ gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
 gyp_shared_intermediate_dir := $(call intermediates-dir-for,GYP,shared,,,$(GYP_VAR_PREFIX))
 
 # Make sure our deps are built first.
-GYP_TARGET_DEPENDENCIES := \
-	$(call intermediates-dir-for,GYP,third_party_openssl_openssl_gyp,,,$(GYP_VAR_PREFIX))/openssl.stamp
+GYP_TARGET_DEPENDENCIES :=
 
 GYP_GENERATED_OUTPUTS :=
 
@@ -140,7 +139,6 @@ MY_CFLAGS_Debug := \
 
 MY_DEFS_Debug := \
 	'-DV8_DEPRECATION_WARNINGS' \
-	'-DBLINK_SCALE_FILTERS_AT_RECORD_TIME' \
 	'-D_FILE_OFFSET_BITS=64' \
 	'-DNO_TCMALLOC' \
 	'-DDISABLE_NACL' \
@@ -202,7 +200,6 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/openssl/openssl/include \
 	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
@@ -264,7 +261,6 @@ MY_CFLAGS_Release := \
 
 MY_DEFS_Release := \
 	'-DV8_DEPRECATION_WARNINGS' \
-	'-DBLINK_SCALE_FILTERS_AT_RECORD_TIME' \
 	'-D_FILE_OFFSET_BITS=64' \
 	'-DNO_TCMALLOC' \
 	'-DDISABLE_NACL' \
@@ -327,7 +323,6 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH)/third_party \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
 	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/openssl/openssl/include \
 	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
