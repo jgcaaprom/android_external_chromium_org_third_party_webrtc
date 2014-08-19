@@ -48,7 +48,8 @@ GYP_GENERATED_OUTPUTS := \
 # Make sure our deps and generated files are built first.
 LOCAL_ADDITIONAL_DEPENDENCIES := $(GYP_TARGET_DEPENDENCIES) $(GYP_GENERATED_OUTPUTS)
 
-LOCAL_GENERATED_SOURCES :=
+LOCAL_GENERATED_SOURCES := \
+	$(gyp_shared_intermediate_dir)/audio_processing/asm_offsets/nsx_core_neon_offsets.o
 
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
