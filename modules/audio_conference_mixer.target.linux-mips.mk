@@ -54,8 +54,6 @@ MY_CFLAGS_Debug := \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-EL \
-	-mhard-float \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -174,8 +172,6 @@ MY_CFLAGS_Release := \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-EL \
-	-mhard-float \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
@@ -283,7 +279,6 @@ LOCAL_LDFLAGS_Debug := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
-	-EL \
 	-Wl,--no-keep-memory \
 	-nostdlib \
 	-Wl,--no-undefined \
@@ -299,7 +294,6 @@ LOCAL_LDFLAGS_Release := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
-	-EL \
 	-Wl,--no-keep-memory \
 	-nostdlib \
 	-Wl,--no-undefined \
