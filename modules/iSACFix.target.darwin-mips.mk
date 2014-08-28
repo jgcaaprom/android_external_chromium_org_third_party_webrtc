@@ -49,6 +49,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/spectrum_ar_model_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_tables.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/entropy_coding_mips.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/filters_mips.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_mips.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator_mips.c \

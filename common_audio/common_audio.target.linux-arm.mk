@@ -66,6 +66,8 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/vad/vad_filterbank.c \
 	third_party/webrtc/common_audio/vad/vad_gmm.c \
 	third_party/webrtc/common_audio/vad/vad_sp.c \
+	third_party/webrtc/common_audio/wav_header.cc \
+	third_party/webrtc/common_audio/wav_writer.cc \
 	third_party/webrtc/common_audio/signal_processing/complex_bit_reverse_arm.S \
 	third_party/webrtc/common_audio/signal_processing/spl_sqrt_floor_arm.S \
 	third_party/webrtc/common_audio/signal_processing/filter_ar_fast_q12_armv7.S

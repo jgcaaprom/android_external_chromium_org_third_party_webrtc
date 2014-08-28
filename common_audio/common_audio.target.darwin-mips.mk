@@ -65,6 +65,8 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/vad/vad_filterbank.c \
 	third_party/webrtc/common_audio/vad/vad_gmm.c \
 	third_party/webrtc/common_audio/vad/vad_sp.c \
+	third_party/webrtc/common_audio/wav_header.cc \
+	third_party/webrtc/common_audio/wav_writer.cc \
 	third_party/webrtc/common_audio/signal_processing/complex_bit_reverse_mips.c \
 	third_party/webrtc/common_audio/signal_processing/complex_fft_mips.c \
 	third_party/webrtc/common_audio/signal_processing/cross_correlation_mips.c \
