@@ -187,7 +187,7 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable, // Q16
             }
         }
         numFIX = WEBRTC_SPL_LSHIFT_W32(WEBRTC_SPL_MUL_16_U16(maxGain, constMaxGain), 6); // Q14
-        numFIX -= WEBRTC_SPL_MUL_32_16((int32_t)logApprox, diffGain); // Q14
+        numFIX -= (int32_t)logApprox * diffGain;  // Q14
 
         // Calculate ratio
         // Shift |numFIX| as much as possible.
@@ -210,7 +210,7 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable, // Q16
         {
             numFIX += WEBRTC_SPL_RSHIFT_W32(tmp32no1, 1);
         }
-        y32 = WEBRTC_SPL_DIV(numFIX, tmp32no1); // in Q14
+        y32 = numFIX / tmp32no1;  // in Q14
         if (limiterEnable && (i < limiterIdx))
         {
             tmp32 = WEBRTC_SPL_MUL_16_U16(i - 1, kLog10_2); // Q14
@@ -237,13 +237,13 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable, // Q16
             {
                 tmp16 = WEBRTC_SPL_LSHIFT_W16(2, 14) - constLinApprox;
                 tmp32no2 = WEBRTC_SPL_LSHIFT_W32(1, 14) - fracPart;
-                tmp32no2 = WEBRTC_SPL_MUL_32_16(tmp32no2, tmp16);
+                tmp32no2 *= tmp16;
                 tmp32no2 = WEBRTC_SPL_RSHIFT_W32(tmp32no2, 13);
                 tmp32no2 = WEBRTC_SPL_LSHIFT_W32(1, 14) - tmp32no2;
             } else
             {
                 tmp16 = constLinApprox - WEBRTC_SPL_LSHIFT_W16(1, 14);
-                tmp32no2 = WEBRTC_SPL_MUL_32_16(fracPart, tmp16);
+                tmp32no2 = fracPart * tmp16;
                 tmp32no2 = WEBRTC_SPL_RSHIFT_W32(tmp32no2, 13);
             }
             fracPart = (uint16_t)tmp32no2;
@@ -755,14 +755,14 @@ int16_t WebRtcAgc_ProcessVad(AgcVad_t *state, // (i) VAD state
 
     // update long-term estimate of mean energy level (Q10)
     tmp32 = WEBRTC_SPL_MUL_16_16(state->meanLongTerm, state->counter) + (int32_t)dB;
-    state->meanLongTerm = WebRtcSpl_DivW32W16ResW16(tmp32,
-                                                    WEBRTC_SPL_ADD_SAT_W16(state->counter, 1));
+    state->meanLongTerm = WebRtcSpl_DivW32W16ResW16(
+        tmp32, WebRtcSpl_AddSatW16(state->counter, 1));
 
     // update long-term estimate of variance in energy level (Q8)
     tmp32 = WEBRTC_SPL_RSHIFT_W32(WEBRTC_SPL_MUL_16_16(dB, dB), 12);
     tmp32 += WEBRTC_SPL_MUL(state->varianceLongTerm, state->counter);
-    state->varianceLongTerm = WebRtcSpl_DivW32W16(tmp32,
-                                                  WEBRTC_SPL_ADD_SAT_W16(state->counter, 1));
+    state->varianceLongTerm = WebRtcSpl_DivW32W16(
+        tmp32, WebRtcSpl_AddSatW16(state->counter, 1));
 
     // update long-term estimate of standard deviation in energy level (Q10)
     tmp32 = WEBRTC_SPL_MUL_16_16(state->meanLongTerm, state->meanLongTerm);

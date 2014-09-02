@@ -47,8 +47,6 @@ TEST_F(SplTest, MacroTest) {
 
     a = b;
     b = -3;
-    EXPECT_EQ(-5461, WEBRTC_SPL_DIV(a, b));
-    EXPECT_EQ(0u, WEBRTC_SPL_UDIV(a, b));
 
     EXPECT_EQ(-1, WEBRTC_SPL_MUL_16_32_RSFT16(a, b));
     EXPECT_EQ(-1, WEBRTC_SPL_MUL_16_32_RSFT15(a, b));
@@ -58,12 +56,8 @@ TEST_F(SplTest, MacroTest) {
     EXPECT_EQ(-12288, WEBRTC_SPL_MUL_16_16_RSFT(a, b, 2));
     EXPECT_EQ(-12287, WEBRTC_SPL_MUL_16_16_RSFT_WITH_ROUND(a, b, 2));
 
-    EXPECT_EQ(16380, WEBRTC_SPL_ADD_SAT_W32(a, b));
     EXPECT_EQ(21, WEBRTC_SPL_SAT(a, A, B));
     EXPECT_EQ(21, WEBRTC_SPL_SAT(a, B, A));
-    EXPECT_EQ(-49149, WEBRTC_SPL_MUL_32_16(a, b));
-
-    EXPECT_EQ(16380, WEBRTC_SPL_ADD_SAT_W16(a, b));
 
     // Shifting with negative numbers allowed
     int shift_amount = 1;  // Workaround compiler warning using variable here.
@@ -168,11 +162,9 @@ TEST_F(SplTest, MathOperationsTest) {
 TEST_F(SplTest, BasicArrayOperationsTest) {
     const int kVectorSize = 4;
     int B[] = {4, 12, 133, 1100};
-    uint8_t b8[kVectorSize];
     int16_t b16[kVectorSize];
     int32_t b32[kVectorSize];
 
-    uint8_t bTmp8[kVectorSize];
     int16_t bTmp16[kVectorSize];
     int32_t bTmp32[kVectorSize];
 
@@ -201,13 +193,8 @@ TEST_F(SplTest, BasicArrayOperationsTest) {
         EXPECT_EQ(1, b32[kk]);
     }
     for (int kk = 0; kk < kVectorSize; ++kk) {
-        bTmp8[kk] = (int8_t)kk;
         bTmp16[kk] = (int16_t)kk;
         bTmp32[kk] = (int32_t)kk;
-    }
-    WEBRTC_SPL_MEMCPY_W8(b8, bTmp8, kVectorSize);
-    for (int kk = 0; kk < kVectorSize; ++kk) {
-        EXPECT_EQ(b8[kk], bTmp8[kk]);
     }
     WEBRTC_SPL_MEMCPY_W16(b16, bTmp16, kVectorSize);
     for (int kk = 0; kk < kVectorSize; ++kk) {

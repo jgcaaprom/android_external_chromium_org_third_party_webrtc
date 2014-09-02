@@ -46,10 +46,6 @@
     ((uint32_t) ((uint32_t)(a) * (uint16_t)(b)))
 #define WEBRTC_SPL_MUL_16_U16(a, b) \
     ((int32_t)(int16_t)(a) * (uint16_t)(b))
-#define WEBRTC_SPL_DIV(a, b) \
-    ((int32_t) ((int32_t)(a) / (int32_t)(b)))
-#define WEBRTC_SPL_UDIV(a, b) \
-    ((uint32_t) ((uint32_t)(a) / (uint32_t)(b)))
 
 #ifndef WEBRTC_ARCH_ARM_V7
 // For ARMv7 platforms, these are inline functions in spl_inl_armv7.h
@@ -84,11 +80,7 @@
 #define WEBRTC_SPL_SCALEDIFF32(A, B, C) \
     (C + (B >> 16) * A + (((uint32_t)(0x0000FFFF & B) * A) >> 16))
 
-#define WEBRTC_SPL_ADD_SAT_W32(a, b)    WebRtcSpl_AddSatW32(a, b)
 #define WEBRTC_SPL_SAT(a, b, c)         (b > a ? a : b < c ? c : b)
-#define WEBRTC_SPL_MUL_32_16(a, b)      ((a) * (b))
-
-#define WEBRTC_SPL_ADD_SAT_W16(a, b)    WebRtcSpl_AddSatW16(a, b)
 
 // Shifting with negative numbers allowed
 // Positive means left shift
@@ -112,8 +104,6 @@
 extern "C" {
 #endif
 
-#define WEBRTC_SPL_MEMCPY_W8(v1, v2, length) \
-  memcpy(v1, v2, (length) * sizeof(char))
 #define WEBRTC_SPL_MEMCPY_W16(v1, v2, length) \
   memcpy(v1, v2, (length) * sizeof(int16_t))
 
