@@ -140,7 +140,7 @@
     },
   ],
   'conditions': [
-    ['include_tests==1 and build_with_chromium==1 and OS=="android"', {
+    ['include_tests==1 and OS=="android"', {
       # Use WebRTC capture code for Android APK tests that are built from a
       # Chromium checkout. Normally when built as a part of Chromium the
       # Chromium video capture code is used. This overrides the default in
@@ -182,9 +182,7 @@
                 '-lX11',
               ],
             }],
-            # TODO(henrike): remove build_with_chromium==1 when the bots are
-            # using Chromium's buildbots.
-            ['build_with_chromium==1 and OS=="android"', {
+            ['OS=="android"', {
               'dependencies': [
                 '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
               ],

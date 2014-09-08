@@ -88,9 +88,7 @@
         'webrtc',
       ],
       'conditions': [
-        # TODO(henrike): remove build_with_chromium==1 when the bots are
-        # using Chromium's buildbots.
-        ['build_with_chromium==1 and OS=="android"', {
+        ['OS=="android"', {
           'dependencies': [
             '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
           ],
@@ -106,6 +104,9 @@
         'video/full_stack.cc',
         'video/rampup_tests.cc',
         'video/rampup_tests.h',
+        # Needed to make the test binary pass since all tests are disabled on
+        # Android (webrtc:3770).
+        'test/testsupport/always_passing_unittest.cc',
       ],
       'dependencies': [
         '<(DEPTH)/testing/gtest.gyp:gtest',
@@ -117,9 +118,7 @@
         'webrtc',
       ],
       'conditions': [
-        # TODO(henrike): remove build_with_chromium==1 when the bots are
-        # using Chromium's buildbots.
-        ['build_with_chromium==1 and OS=="android"', {
+        ['OS=="android"', {
           'dependencies': [
             '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
           ],
@@ -128,9 +127,7 @@
     },
   ],
   'conditions': [
-    # TODO(henrike): remove build_with_chromium==1 when the bots are using
-    # Chromium's buildbots.
-    ['build_with_chromium==1 and OS=="android"', {
+    ['OS=="android"', {
       'targets': [
         {
           'target_name': 'video_engine_tests_apk_target',

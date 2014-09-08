@@ -150,6 +150,7 @@
             'audio_coding/neteq/mock/mock_delay_peak_detector.h',
             'audio_coding/neteq/mock/mock_dtmf_buffer.h',
             'audio_coding/neteq/mock/mock_dtmf_tone_generator.h',
+            'audio_coding/neteq/mock/mock_expand.h',
             'audio_coding/neteq/mock/mock_external_decoder_pcm16b.h',
             'audio_coding/neteq/mock/mock_packet_buffer.h',
             'audio_coding/neteq/mock/mock_payload_splitter.h',
@@ -295,9 +296,7 @@
                 '<(DEPTH)/third_party/libvpx/libvpx.gyp:libvpx',
               ],
             }],
-            # TODO(henrike): remove build_with_chromium==1 when the bots are
-            # using Chromium's buildbots.
-            ['build_with_chromium==1 and OS=="android"', {
+            ['OS=="android"', {
               'dependencies': [
                 '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
               ],
@@ -356,9 +355,7 @@
             'video_coding/codecs/vp8/test/vp8_impl_unittest.cc',
           ],
           'conditions': [
-            # TODO(henrike): remove build_with_chromium==1 when the bots are
-            # using Chromium's buildbots.
-            ['build_with_chromium==1 and OS=="android"', {
+            ['OS=="android"', {
               'dependencies': [
                 '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
               ],
@@ -367,9 +364,7 @@
         },
       ],
       'conditions': [
-        # TODO(henrike): remove build_with_chromium==1 when the bots are using
-        # Chromium's buildbots.
-        ['build_with_chromium==1 and OS=="android"', {
+        ['OS=="android"', {
           'targets': [
             {
               'target_name': 'modules_unittests_apk_target',
