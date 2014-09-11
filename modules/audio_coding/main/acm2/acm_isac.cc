@@ -93,8 +93,6 @@ int16_t ACMISAC::InternalCreateEncoder() { return -1; }
 
 void ACMISAC::DestructEncoderSafe() { return; }
 
-void ACMISAC::InternalDestructEncoderInst(void* /* ptr_inst */) { return; }
-
 int16_t ACMISAC::Transcode(uint8_t* /* bitstream */,
                            int16_t* /* bitstream_len_byte */,
                            int16_t /* q_bwe */,
@@ -461,13 +459,6 @@ void ACMISAC::DestructEncoderSafe() {
   return;
 }
 
-void ACMISAC::InternalDestructEncoderInst(void* ptr_inst) {
-  if (ptr_inst != NULL) {
-    ACM_ISAC_FREE(static_cast<ACM_ISAC_STRUCT *>(ptr_inst));
-  }
-  return;
-}
-
 int16_t ACMISAC::SetBitRateSafe(int32_t bit_rate) {
   CriticalSectionScoped lock(codec_inst_crit_sect_.get());
   if (codec_inst_ptr_ == NULL) {
@@ -736,7 +727,7 @@ int ACMISAC::Decode(const uint8_t* encoded,
                     size_t encoded_len,
                     int16_t* decoded,
                     SpeechType* speech_type) {
-  int16_t temp_type;
+  int16_t temp_type = 1;  // Default is speech.
   CriticalSectionScoped lock(codec_inst_crit_sect_.get());
   int ret =
       ACM_ISAC_DECODE_B(static_cast<ACM_ISAC_STRUCT*>(codec_inst_ptr_->inst),

@@ -25,7 +25,17 @@
   ],
   'targets': [
     {
+      # Temporary target until Chromium's
+      # src/third_party/libjingle/libjingle.gyp is updated to use rtc_base.
+      # TODO(kjellander): Remove when r7140 is rolled into Chromium's DEPS.
       'target_name': 'webrtc_base',
+      'type': 'none',
+      'dependencies': [
+        'rtc_base',
+      ],
+    },
+    {
+      'target_name': 'rtc_base',
       'type': 'static_library',
       'defines': [
         'FEATURE_ENABLE_SSL',
@@ -316,7 +326,7 @@
         '../overrides/webrtc/base/logging.h',
         '../overrides/webrtc/base/win32socketinit.cc',
       ],
-      # TODO(henrike): issue 3307, make webrtc_base build without disabling
+      # TODO(henrike): issue 3307, make rtc_base build without disabling
       # these flags.
       'cflags!': [
         '-Wextra',
@@ -500,18 +510,22 @@
             }],
           ],
         }, {
-          'defines': [
-            'SSL_USE_NSS',
-            'HAVE_NSS_SSL_H',
-            'SSL_USE_NSS_RNG',
+          'conditions': [
+            ['use_legacy_ssl_defaults!=1', {
+              'defines': [
+                'SSL_USE_NSS',
+                'HAVE_NSS_SSL_H',
+                'SSL_USE_NSS_RNG',
+              ],
+              'direct_dependent_settings': {
+                'defines': [
+                  'SSL_USE_NSS',
+                  'HAVE_NSS_SSL_H',
+                  'SSL_USE_NSS_RNG',
+                ],
+              },
+            }],
           ],
-          'direct_dependent_settings': {
-            'defines': [
-              'SSL_USE_NSS',
-              'HAVE_NSS_SSL_H',
-              'SSL_USE_NSS_RNG',
-            ],
-          },
         }],
         ['OS == "android"', {
           'defines': [
@@ -529,16 +543,20 @@
             ],
           },
         }, {
-          'defines': [
-            'HAVE_NSS_SSL_H'
-            'SSL_USE_NSS_RNG',
+          'conditions': [
+            ['use_legacy_ssl_defaults!=1', {
+              'defines': [
+                'HAVE_NSS_SSL_H',
+                'SSL_USE_NSS_RNG',
+              ],
+              'direct_dependent_settings': {
+                'defines': [
+                  'HAVE_NSS_SSL_H',
+                  'SSL_USE_NSS_RNG',
+                ],
+              },
+            }],
           ],
-          'direct_dependent_settings': {
-            'defines': [
-              'HAVE_NSS_SSL_H'
-              'SSL_USE_NSS_RNG',
-            ],
-          },
           'sources!': [
             'ifaddrs-android.cc',
             'ifaddrs-android.h',
