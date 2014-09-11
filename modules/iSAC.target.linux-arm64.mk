@@ -57,7 +57,6 @@ LOCAL_SRC_FILES := \
 MY_CFLAGS_Debug := \
 	--param=ssp-buffer-size=4 \
 	-Werror \
-	-fno-exceptions \
 	-fno-strict-aliasing \
 	-Wall \
 	-Wno-unused-parameter \
@@ -157,6 +156,7 @@ LOCAL_C_INCLUDES_Debug := \
 
 # Flags passed to only C++ (and not C) files.
 LOCAL_CPPFLAGS_Debug := \
+	-fno-exceptions \
 	-fno-rtti \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
@@ -172,7 +172,6 @@ LOCAL_CPPFLAGS_Debug := \
 MY_CFLAGS_Release := \
 	--param=ssp-buffer-size=4 \
 	-Werror \
-	-fno-exceptions \
 	-fno-strict-aliasing \
 	-Wall \
 	-Wno-unused-parameter \
@@ -273,6 +272,7 @@ LOCAL_C_INCLUDES_Release := \
 
 # Flags passed to only C++ (and not C) files.
 LOCAL_CPPFLAGS_Release := \
+	-fno-exceptions \
 	-fno-rtti \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
@@ -296,6 +296,7 @@ LOCAL_LDFLAGS_Debug := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
+	-Wl,--dynamic-linker=/system/bin/linker64 \
 	-nostdlib \
 	-Wl,--no-undefined \
 	-Wl,--exclude-libs=ALL \
@@ -310,6 +311,7 @@ LOCAL_LDFLAGS_Release := \
 	-Wl,--fatal-warnings \
 	-Wl,-z,noexecstack \
 	-fPIC \
+	-Wl,--dynamic-linker=/system/bin/linker64 \
 	-nostdlib \
 	-Wl,--no-undefined \
 	-Wl,--exclude-libs=ALL \
