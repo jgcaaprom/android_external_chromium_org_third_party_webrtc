@@ -23,7 +23,8 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/modules/video_coding/utility/frame_dropper.cc
+	third_party/webrtc/modules/video_coding/utility/frame_dropper.cc \
+	third_party/webrtc/modules/video_coding/utility/quality_scaler.cc
 
 
 # Flags passed to both C and C++ files.
