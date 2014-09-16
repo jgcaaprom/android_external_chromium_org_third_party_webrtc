@@ -3,7 +3,7 @@
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-LOCAL_MODULE := third_party_webrtc_base_rtc_base_gyp
+LOCAL_MODULE := third_party_webrtc_base_rtc_base_approved_gyp
 LOCAL_MODULE_SUFFIX := .a
 LOCAL_MODULE_TARGET_ARCH := $(TARGET_$(GYP_VAR_PREFIX)ARCH)
 gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
@@ -23,72 +23,12 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/base/asyncfile.cc \
-	third_party/webrtc/base/asynchttprequest.cc \
-	third_party/webrtc/base/asyncsocket.cc \
-	third_party/webrtc/base/asynctcpsocket.cc \
-	third_party/webrtc/base/asyncudpsocket.cc \
-	third_party/webrtc/base/autodetectproxy.cc \
-	third_party/webrtc/base/base64.cc \
-	third_party/webrtc/base/bytebuffer.cc \
-	third_party/webrtc/base/common.cc \
-	third_party/webrtc/base/cpumonitor.cc \
-	third_party/webrtc/base/crc32.cc \
-	third_party/webrtc/base/diskcache.cc \
-	third_party/webrtc/base/event.cc \
-	third_party/webrtc/base/fileutils.cc \
-	third_party/webrtc/base/firewallsocketserver.cc \
-	third_party/webrtc/base/flags.cc \
-	third_party/webrtc/base/helpers.cc \
-	third_party/webrtc/base/httpbase.cc \
-	third_party/webrtc/base/httpclient.cc \
-	third_party/webrtc/base/httpcommon.cc \
-	third_party/webrtc/base/httprequest.cc \
-	third_party/webrtc/base/ifaddrs-android.cc \
-	third_party/webrtc/base/ipaddress.cc \
-	third_party/webrtc/base/linux.cc \
-	third_party/webrtc/base/messagedigest.cc \
-	third_party/webrtc/base/messagehandler.cc \
-	third_party/webrtc/base/messagequeue.cc \
-	third_party/webrtc/base/nethelpers.cc \
-	third_party/webrtc/base/network.cc \
-	third_party/webrtc/base/nssidentity.cc \
-	third_party/webrtc/base/nssstreamadapter.cc \
-	third_party/webrtc/base/openssladapter.cc \
-	third_party/webrtc/base/openssldigest.cc \
-	third_party/webrtc/base/opensslidentity.cc \
-	third_party/webrtc/base/opensslstreamadapter.cc \
-	third_party/webrtc/base/pathutils.cc \
-	third_party/webrtc/base/physicalsocketserver.cc \
-	third_party/webrtc/base/proxydetect.cc \
-	third_party/webrtc/base/proxyinfo.cc \
-	third_party/webrtc/base/ratelimiter.cc \
-	third_party/webrtc/base/ratetracker.cc \
-	third_party/webrtc/base/sha1.cc \
-	third_party/webrtc/base/signalthread.cc \
-	third_party/webrtc/base/socketadapters.cc \
-	third_party/webrtc/base/socketaddress.cc \
-	third_party/webrtc/base/socketaddresspair.cc \
-	third_party/webrtc/base/socketpool.cc \
-	third_party/webrtc/base/socketstream.cc \
-	third_party/webrtc/base/ssladapter.cc \
-	third_party/webrtc/base/sslfingerprint.cc \
-	third_party/webrtc/base/sslidentity.cc \
-	third_party/webrtc/base/sslsocketfactory.cc \
-	third_party/webrtc/base/sslstreamadapter.cc \
-	third_party/webrtc/base/sslstreamadapterhelper.cc \
-	third_party/webrtc/base/stream.cc \
-	third_party/webrtc/base/systeminfo.cc \
-	third_party/webrtc/base/task.cc \
-	third_party/webrtc/base/taskparent.cc \
-	third_party/webrtc/base/taskrunner.cc \
-	third_party/webrtc/base/thread.cc \
-	third_party/webrtc/base/thread_checker_impl.cc \
-	third_party/webrtc/base/timing.cc \
-	third_party/webrtc/base/unixfilesystem.cc \
-	third_party/webrtc/base/urlencode.cc \
-	third_party/webrtc/base/worker.cc \
-	third_party/webrtc/overrides/webrtc/base/logging.cc
+	third_party/webrtc/base/checks.cc \
+	third_party/webrtc/base/exp_filter.cc \
+	third_party/webrtc/base/md5.cc \
+	third_party/webrtc/base/stringencode.cc \
+	third_party/webrtc/base/stringutils.cc \
+	third_party/webrtc/base/timeutils.cc
 
 
 # Flags passed to both C and C++ files.
@@ -97,6 +37,7 @@ MY_CFLAGS_Debug := \
 	--param=ssp-buffer-size=4 \
 	-Werror \
 	-fno-strict-aliasing \
+	-Wall \
 	-Wno-unused-parameter \
 	-Wno-missing-field-initializers \
 	-fvisibility=hidden \
@@ -162,13 +103,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
-	'-DFEATURE_ENABLE_SSL' \
-	'-DLOGGING=1' \
-	'-DUSE_WEBRTC_DEV_BRANCH' \
-	'-DNO_MAIN_THREAD_WRAPPING' \
-	'-DSSL_USE_NSS' \
-	'-DSSL_USE_OPENSSL' \
-	'-DHAVE_OPENSSL_SSL_H' \
 	'-DUSE_OPENSSL=1' \
 	'-DUSE_OPENSSL_CERTS=1' \
 	'-D__STDC_CONSTANT_MACROS' \
@@ -189,9 +123,6 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
-	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
-	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -217,6 +148,7 @@ MY_CFLAGS_Release := \
 	--param=ssp-buffer-size=4 \
 	-Werror \
 	-fno-strict-aliasing \
+	-Wall \
 	-Wno-unused-parameter \
 	-Wno-missing-field-initializers \
 	-fvisibility=hidden \
@@ -282,13 +214,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
 	'-DWEBRTC_ANDROID_OPENSLES' \
-	'-DFEATURE_ENABLE_SSL' \
-	'-DLOGGING=1' \
-	'-DUSE_WEBRTC_DEV_BRANCH' \
-	'-DNO_MAIN_THREAD_WRAPPING' \
-	'-DSSL_USE_NSS' \
-	'-DSSL_USE_OPENSSL' \
-	'-DHAVE_OPENSSL_SSL_H' \
 	'-DUSE_OPENSSL=1' \
 	'-DUSE_OPENSSL_CERTS=1' \
 	'-D__STDC_CONSTANT_MACROS' \
@@ -310,9 +235,6 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
-	$(LOCAL_PATH)/third_party/third_party/jsoncpp/overrides/include \
-	$(LOCAL_PATH)/third_party/third_party/jsoncpp/source/include \
-	$(LOCAL_PATH)/third_party/boringssl/src/include \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -344,10 +266,10 @@ LOCAL_SHARED_LIBRARIES := \
 
 # Add target alias to "gyp_all_modules" target.
 .PHONY: gyp_all_modules
-gyp_all_modules: third_party_webrtc_base_rtc_base_gyp
+gyp_all_modules: third_party_webrtc_base_rtc_base_approved_gyp
 
 # Alias gyp target name.
-.PHONY: rtc_base
-rtc_base: third_party_webrtc_base_rtc_base_gyp
+.PHONY: rtc_base_approved
+rtc_base_approved: third_party_webrtc_base_rtc_base_approved_gyp
 
 include $(BUILD_STATIC_LIBRARY)

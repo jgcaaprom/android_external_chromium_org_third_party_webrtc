@@ -31,13 +31,11 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/autodetectproxy.cc \
 	third_party/webrtc/base/base64.cc \
 	third_party/webrtc/base/bytebuffer.cc \
-	third_party/webrtc/base/checks.cc \
 	third_party/webrtc/base/common.cc \
 	third_party/webrtc/base/cpumonitor.cc \
 	third_party/webrtc/base/crc32.cc \
 	third_party/webrtc/base/diskcache.cc \
 	third_party/webrtc/base/event.cc \
-	third_party/webrtc/base/exp_filter.cc \
 	third_party/webrtc/base/fileutils.cc \
 	third_party/webrtc/base/firewallsocketserver.cc \
 	third_party/webrtc/base/flags.cc \
@@ -49,7 +47,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/ifaddrs-android.cc \
 	third_party/webrtc/base/ipaddress.cc \
 	third_party/webrtc/base/linux.cc \
-	third_party/webrtc/base/md5.cc \
 	third_party/webrtc/base/messagedigest.cc \
 	third_party/webrtc/base/messagehandler.cc \
 	third_party/webrtc/base/messagequeue.cc \
@@ -81,15 +78,12 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/sslstreamadapter.cc \
 	third_party/webrtc/base/sslstreamadapterhelper.cc \
 	third_party/webrtc/base/stream.cc \
-	third_party/webrtc/base/stringencode.cc \
-	third_party/webrtc/base/stringutils.cc \
 	third_party/webrtc/base/systeminfo.cc \
 	third_party/webrtc/base/task.cc \
 	third_party/webrtc/base/taskparent.cc \
 	third_party/webrtc/base/taskrunner.cc \
 	third_party/webrtc/base/thread.cc \
 	third_party/webrtc/base/thread_checker_impl.cc \
-	third_party/webrtc/base/timeutils.cc \
 	third_party/webrtc/base/timing.cc \
 	third_party/webrtc/base/unixfilesystem.cc \
 	third_party/webrtc/base/urlencode.cc \
