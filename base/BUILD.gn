@@ -110,11 +110,35 @@ if (rtc_build_ssl == 0) {
   }
 }
 
+# The subset of rtc_base approved for use outside of libjingle.
+static_library("rtc_base_approved") {
+  configs += [ "..:common_config" ]
+  direct_dependent_configs = [ "..:common_inherited_config" ]
+
+  sources = [
+    "checks.cc",
+    "checks.h",
+    "exp_filter.cc",
+    "exp_filter.h",
+    "md5.cc",
+    "md5.h",
+    "md5digest.h",
+    "stringencode.cc",
+    "stringencode.h",
+    "stringutils.cc",
+    "stringutils.h",
+    "timeutils.cc",
+    "timeutils.h",
+  ]
+}
+
 static_library("webrtc_base") {
   cflags = []
   cflags_cc = []
   libs = []
-  deps= []
+  deps = [
+    ":rtc_base_approved",
+  ]
 
   configs += [
     "..:common_config",
@@ -151,8 +175,6 @@ static_library("webrtc_base") {
     "bytebuffer.cc",
     "bytebuffer.h",
     "byteorder.h",
-    "checks.cc",
-    "checks.h",
     "common.cc",
     "common.h",
     "cpumonitor.cc",
@@ -188,9 +210,6 @@ static_library("webrtc_base") {
     "ipaddress.h",
     "linked_ptr.h",
     "mathutils.h",
-    "md5.cc",
-    "md5.h",
-    "md5digest.h",
     "messagedigest.cc",
     "messagedigest.h",
     "messagehandler.cc",
@@ -257,10 +276,6 @@ static_library("webrtc_base") {
     "sslstreamadapterhelper.h",
     "stream.cc",
     "stream.h",
-    "stringencode.cc",
-    "stringencode.h",
-    "stringutils.cc",
-    "stringutils.h",
     "systeminfo.cc",
     "systeminfo.h",
     "task.cc",
@@ -274,8 +289,6 @@ static_library("webrtc_base") {
     "thread_checker.h",
     "thread_checker_impl.cc",
     "thread_checker_impl.h",
-    "timeutils.cc",
-    "timeutils.h",
     "timing.cc",
     "timing.h",
     "urlencode.cc",
@@ -325,8 +338,6 @@ static_library("webrtc_base") {
       "callback.h",
       "callback.h.pump",
       "constructormagic.h",
-      "exp_filter.cc",
-      "exp_filter.h",
       "filelock.cc",
       "filelock.h",
       "fileutils_mock.h",
