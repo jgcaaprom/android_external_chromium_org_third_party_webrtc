@@ -25,8 +25,7 @@ GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/video_render/external/video_render_external_impl.cc \
 	third_party/webrtc/modules/video_render/incoming_video_stream.cc \
-	third_party/webrtc/modules/video_render/video_render_frames.cc \
-	third_party/webrtc/modules/video_render/video_render_impl.cc
+	third_party/webrtc/modules/video_render/video_render_frames.cc
 
 
 # Flags passed to both C and C++ files.

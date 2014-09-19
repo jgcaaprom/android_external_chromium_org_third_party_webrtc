@@ -3,7 +3,7 @@
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-LOCAL_MODULE := third_party_webrtc_modules_video_capture_module_gyp
+LOCAL_MODULE := third_party_webrtc_modules_video_render_module_impl_gyp
 LOCAL_MODULE_SUFFIX := .a
 LOCAL_MODULE_TARGET_ARCH := $(TARGET_$(GYP_VAR_PREFIX)ARCH)
 gyp_intermediate_dir := $(call local-intermediates-dir,,$(GYP_VAR_PREFIX))
@@ -23,16 +23,13 @@ LOCAL_GENERATED_SOURCES :=
 GYP_COPIED_SOURCE_ORIGIN_DIRS :=
 
 LOCAL_SRC_FILES := \
-	third_party/webrtc/modules/video_capture/device_info_impl.cc \
-	third_party/webrtc/modules/video_capture/video_capture_factory.cc \
-	third_party/webrtc/modules/video_capture/video_capture_impl.cc
+	third_party/webrtc/modules/video_render/video_render_impl.cc
 
 
 # Flags passed to both C and C++ files.
 MY_CFLAGS_Debug := \
-	-fstack-protector \
 	--param=ssp-buffer-size=4 \
-	 \
+	-Werror \
 	-fno-strict-aliasing \
 	-Wall \
 	-Wno-unused-parameter \
@@ -41,12 +38,10 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -54,7 +49,6 @@ MY_CFLAGS_Debug := \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
-	-fstack-protector \
 	-fno-short-enums \
 	-finline-limit=64 \
 	-Wa,--noexecstack \
@@ -67,7 +61,6 @@ MY_CFLAGS_Debug := \
 	-g \
 	-fdata-sections \
 	-ffunction-sections \
-	-fomit-frame-pointer \
 	-funwind-tables
 
 MY_DEFS_Debug := \
@@ -100,8 +93,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -126,9 +117,6 @@ LOCAL_C_INCLUDES_Debug := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
-	$(LOCAL_PATH)/third_party/webrtc/common_video/interface \
-	$(LOCAL_PATH)/third_party/webrtc/common_video/libyuv/include \
-	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -141,7 +129,6 @@ LOCAL_CPPFLAGS_Debug := \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
 	-Wsign-compare \
-	-Wno-uninitialized \
 	-std=gnu++11 \
 	-Wno-narrowing \
 	-Wno-literal-suffix \
@@ -151,9 +138,8 @@ LOCAL_CPPFLAGS_Debug := \
 
 # Flags passed to both C and C++ files.
 MY_CFLAGS_Release := \
-	-fstack-protector \
 	--param=ssp-buffer-size=4 \
-	 \
+	-Werror \
 	-fno-strict-aliasing \
 	-Wall \
 	-Wno-unused-parameter \
@@ -162,12 +148,10 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -175,7 +159,6 @@ MY_CFLAGS_Release := \
 	-ffunction-sections \
 	-funwind-tables \
 	-g \
-	-fstack-protector \
 	-fno-short-enums \
 	-finline-limit=64 \
 	-Wa,--noexecstack \
@@ -188,7 +171,6 @@ MY_CFLAGS_Release := \
 	-fno-ident \
 	-fdata-sections \
 	-ffunction-sections \
-	-fomit-frame-pointer \
 	-funwind-tables
 
 MY_DEFS_Release := \
@@ -221,8 +203,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -248,9 +228,6 @@ LOCAL_C_INCLUDES_Release := \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/third_party/webrtc/overrides \
 	$(LOCAL_PATH)/third_party \
-	$(LOCAL_PATH)/third_party/webrtc/common_video/interface \
-	$(LOCAL_PATH)/third_party/webrtc/common_video/libyuv/include \
-	$(LOCAL_PATH)/third_party/webrtc/system_wrappers/interface \
 	$(PWD)/frameworks/wilhelm/include \
 	$(PWD)/bionic \
 	$(PWD)/external/stlport/stlport
@@ -263,7 +240,6 @@ LOCAL_CPPFLAGS_Release := \
 	-fno-threadsafe-statics \
 	-fvisibility-inlines-hidden \
 	-Wsign-compare \
-	-Wno-uninitialized \
 	-std=gnu++11 \
 	-Wno-narrowing \
 	-Wno-literal-suffix \
@@ -283,10 +259,10 @@ LOCAL_SHARED_LIBRARIES := \
 
 # Add target alias to "gyp_all_modules" target.
 .PHONY: gyp_all_modules
-gyp_all_modules: third_party_webrtc_modules_video_capture_module_gyp
+gyp_all_modules: third_party_webrtc_modules_video_render_module_impl_gyp
 
 # Alias gyp target name.
-.PHONY: video_capture_module
-video_capture_module: third_party_webrtc_modules_video_capture_module_gyp
+.PHONY: video_render_module_impl
+video_render_module_impl: third_party_webrtc_modules_video_render_module_impl_gyp
 
 include $(BUILD_STATIC_LIBRARY)
