@@ -122,6 +122,8 @@
           'type': '<(gtest_target_type)',
           'dependencies': [
             'video_engine_core',
+            '<(webrtc_root)/modules/modules.gyp:video_capture_module_internal_impl',
+	    '<(webrtc_root)/modules/modules.gyp:video_render_module_internal_impl',
             '<(DEPTH)/testing/gtest.gyp:gtest',
             '<(DEPTH)/testing/gmock.gyp:gmock',
             '<(webrtc_root)/test/test.gyp:test_support_main',

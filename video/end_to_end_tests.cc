@@ -19,7 +19,6 @@
 #include "webrtc/call.h"
 #include "webrtc/frame_callback.h"
 #include "webrtc/modules/rtp_rtcp/source/rtcp_utility.h"
-#include "webrtc/modules/video_coding/codecs/vp8/include/vp8.h"
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/interface/event_wrapper.h"
 #include "webrtc/system_wrappers/interface/scoped_ptr.h"
@@ -35,11 +34,10 @@
 #include "webrtc/test/null_transport.h"
 #include "webrtc/test/rtp_rtcp_observer.h"
 #include "webrtc/test/testsupport/fileutils.h"
+#include "webrtc/test/testsupport/gtest_disable.h"
 #include "webrtc/test/testsupport/perf_test.h"
 #include "webrtc/video/transport_adapter.h"
-
-// Disabled on Android since all tests currently fail (webrtc:3770).
-#ifndef WEBRTC_ANDROID
+#include "webrtc/video_encoder.h"
 
 namespace webrtc {
 
@@ -580,7 +578,8 @@ TEST_F(EndToEndTest, DecodesRetransmittedFrameOverRtx) {
   DecodesRetransmittedFrame(true);
 }
 
-TEST_F(EndToEndTest, UsesFrameCallbacks) {
+// Disabled due to: https://code.google.com/p/webrtc/issues/detail?id=3770
+TEST_F(EndToEndTest, DISABLED_ON_ANDROID(UsesFrameCallbacks)) {
   static const int kWidth = 320;
   static const int kHeight = 240;
 
@@ -645,7 +644,8 @@ TEST_F(EndToEndTest, UsesFrameCallbacks) {
   receiver_transport.SetReceiver(sender_call_->Receiver());
 
   CreateSendConfig(1);
-  scoped_ptr<VP8Encoder> encoder(VP8Encoder::Create());
+  scoped_ptr<VideoEncoder> encoder(
+      VideoEncoder::Create(VideoEncoder::kVp8));
   send_config_.encoder_settings.encoder = encoder.get();
   send_config_.encoder_settings.payload_name = "VP8";
   ASSERT_EQ(1u, video_streams_.size()) << "Test setup error.";
@@ -925,7 +925,9 @@ TEST_F(EndToEndTest, UsesRtcpReducedSizeMode) {
 // Another is set up to receive all three of these with different renderers.
 // Each renderer verifies that it receives the expected resolution, and as soon
 // as every renderer has received a frame, the test finishes.
-TEST_F(EndToEndTest, SendsAndReceivesMultipleStreams) {
+//
+// Disabled due to: https://code.google.com/p/webrtc/issues/detail?id=3770
+TEST_F(EndToEndTest, DISABLED_ON_ANDROID(SendsAndReceivesMultipleStreams)) {
   static const size_t kNumStreams = 3;
 
   class VideoOutputObserver : public VideoRenderer {
@@ -974,9 +976,9 @@ TEST_F(EndToEndTest, SendsAndReceivesMultipleStreams) {
   VideoOutputObserver* observers[kNumStreams];
   test::FrameGeneratorCapturer* frame_generators[kNumStreams];
 
-  scoped_ptr<VP8Encoder> encoders[kNumStreams];
+  scoped_ptr<VideoEncoder> encoders[kNumStreams];
   for (size_t i = 0; i < kNumStreams; ++i)
-    encoders[i].reset(VP8Encoder::Create());
+    encoders[i].reset(VideoEncoder::Create(VideoEncoder::kVp8));
 
   for (size_t i = 0; i < kNumStreams; ++i) {
     uint32_t ssrc = codec_settings[i].ssrc;
@@ -2075,5 +2077,3 @@ TEST_F(EndToEndTest, NewReceiveStreamsRespectNetworkDown) {
   DestroyStreams();
 }
 }  // namespace webrtc
-
-#endif // !WEBRTC_ANDROID
