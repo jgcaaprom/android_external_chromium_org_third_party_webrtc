@@ -66,6 +66,7 @@ MY_CFLAGS_Debug := \
 	-fno-stack-protector \
 	-Os \
 	-g \
+	-gdwarf-4 \
 	-fdata-sections \
 	-ffunction-sections \
 	-fomit-frame-pointer \
