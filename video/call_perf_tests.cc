@@ -15,6 +15,7 @@
 
 #include "testing/gtest/include/gtest/gtest.h"
 
+#include "webrtc/base/thread_annotations.h"
 #include "webrtc/call.h"
 #include "webrtc/modules/audio_coding/main/interface/audio_coding_module.h"
 #include "webrtc/modules/rtp_rtcp/interface/rtp_header_parser.h"
@@ -22,7 +23,6 @@
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/interface/rtp_to_ntp.h"
 #include "webrtc/system_wrappers/interface/scoped_ptr.h"
-#include "webrtc/system_wrappers/interface/thread_annotations.h"
 #include "webrtc/test/call_test.h"
 #include "webrtc/test/direct_transport.h"
 #include "webrtc/test/encoder_settings.h"
@@ -399,7 +399,7 @@ void CallPerfTest::TestCaptureNtpTime(const FakeNetworkPipe::Config& net_config,
     virtual void ModifyConfigs(
         VideoSendStream::Config* send_config,
         std::vector<VideoReceiveStream::Config>* receive_configs,
-        std::vector<VideoStream>* video_streams) OVERRIDE {
+        VideoEncoderConfig* encoder_config) OVERRIDE {
       (*receive_configs)[0].renderer = this;
       // Enable the receiver side rtt calculation.
       (*receive_configs)[0].rtp.rtcp_xr.receiver_reference_time_report = true;
@@ -546,7 +546,7 @@ void CallPerfTest::TestMinTransmitBitrate(bool pad_to_min_bitrate) {
     virtual void ModifyConfigs(
         VideoSendStream::Config* send_config,
         std::vector<VideoReceiveStream::Config>* receive_configs,
-        std::vector<VideoStream>* video_streams) OVERRIDE {
+        VideoEncoderConfig* encoder_config) OVERRIDE {
       if (pad_to_min_bitrate_) {
         send_config->rtp.min_transmit_bitrate_bps = kMinTransmitBitrateBps;
       } else {
