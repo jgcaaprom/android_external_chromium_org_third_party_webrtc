@@ -257,10 +257,9 @@ int AudioProcessingImpl::InitializeLocked(int input_sample_rate_hz,
     }
   }
 
-  // TODO(ajm): Enable this.
-  // Always downmix the reverse stream to mono for analysis.
-  //rev_proc_format_.set(rev_proc_rate, 1);
-  rev_proc_format_.set(rev_proc_rate, rev_in_format_.num_channels());
+  // Always downmix the reverse stream to mono for analysis. This has been
+  // demonstrated to work well for AEC in most practical scenarios.
+  rev_proc_format_.set(rev_proc_rate, 1);
 
   if (fwd_proc_format_.rate() == kSampleRate32kHz) {
     split_rate_ = kSampleRate16kHz;
@@ -482,12 +481,12 @@ int AudioProcessingImpl::ProcessStreamLocked() {
 
   RETURN_ON_ERR(high_pass_filter_->ProcessCaptureAudio(ca));
   RETURN_ON_ERR(gain_control_->AnalyzeCaptureAudio(ca));
+  RETURN_ON_ERR(noise_suppression_->AnalyzeCaptureAudio(ca));
   RETURN_ON_ERR(echo_cancellation_->ProcessCaptureAudio(ca));
 
   if (echo_control_mobile_->is_enabled() && noise_suppression_->is_enabled()) {
     ca->CopyLowPassToReference();
   }
-  RETURN_ON_ERR(noise_suppression_->AnalyzeCaptureAudio(ca));
   RETURN_ON_ERR(noise_suppression_->ProcessCaptureAudio(ca));
   RETURN_ON_ERR(echo_control_mobile_->ProcessCaptureAudio(ca));
   RETURN_ON_ERR(voice_detection_->ProcessCaptureAudio(ca));

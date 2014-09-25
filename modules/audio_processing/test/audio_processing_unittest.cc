@@ -751,7 +751,8 @@ TEST_F(ApmTest, Channels) {
   for (int i = 1; i < 3; i++) {
     TestChangingChannels(i, kNoErr);
     EXPECT_EQ(i, apm_->num_input_channels());
-    EXPECT_EQ(i, apm_->num_reverse_channels());
+    // We always force the number of reverse channels used for processing to 1.
+    EXPECT_EQ(1, apm_->num_reverse_channels());
   }
 }
 
@@ -1671,7 +1672,7 @@ TEST_F(ApmTest, FloatAndIntInterfacesGiveIdenticalResults) {
     const int num_output_channels = test->num_output_channels();
     const int samples_per_channel = test->sample_rate() *
         AudioProcessing::kChunkSizeMs / 1000;
-    const int output_length =  samples_per_channel * num_output_channels;
+    const int output_length = samples_per_channel * num_output_channels;
 
     Init(test->sample_rate(), test->sample_rate(), test->sample_rate(),
          num_input_channels, num_output_channels, num_render_channels, true);
@@ -2325,25 +2326,25 @@ TEST_P(AudioProcessingTest, Formats) {
 #if defined(WEBRTC_AUDIOPROC_FLOAT_PROFILE)
 INSTANTIATE_TEST_CASE_P(
     CommonFormats, AudioProcessingTest, testing::Values(
-        std::tr1::make_tuple(48000, 48000, 48000, 25),
-        std::tr1::make_tuple(48000, 48000, 32000, 25),
-        std::tr1::make_tuple(48000, 48000, 16000, 25),
-        std::tr1::make_tuple(48000, 44100, 48000, 20),
-        std::tr1::make_tuple(48000, 44100, 32000, 20),
-        std::tr1::make_tuple(48000, 44100, 16000, 20),
-        std::tr1::make_tuple(48000, 32000, 48000, 25),
-        std::tr1::make_tuple(48000, 32000, 32000, 25),
-        std::tr1::make_tuple(48000, 32000, 16000, 25),
-        std::tr1::make_tuple(48000, 16000, 48000, 25),
-        std::tr1::make_tuple(48000, 16000, 32000, 25),
-        std::tr1::make_tuple(48000, 16000, 16000, 25),
+        std::tr1::make_tuple(48000, 48000, 48000, 20),
+        std::tr1::make_tuple(48000, 48000, 32000, 20),
+        std::tr1::make_tuple(48000, 48000, 16000, 20),
+        std::tr1::make_tuple(48000, 44100, 48000, 15),
+        std::tr1::make_tuple(48000, 44100, 32000, 15),
+        std::tr1::make_tuple(48000, 44100, 16000, 15),
+        std::tr1::make_tuple(48000, 32000, 48000, 20),
+        std::tr1::make_tuple(48000, 32000, 32000, 20),
+        std::tr1::make_tuple(48000, 32000, 16000, 20),
+        std::tr1::make_tuple(48000, 16000, 48000, 20),
+        std::tr1::make_tuple(48000, 16000, 32000, 20),
+        std::tr1::make_tuple(48000, 16000, 16000, 20),
 
         std::tr1::make_tuple(44100, 48000, 48000, 20),
         std::tr1::make_tuple(44100, 48000, 32000, 20),
         std::tr1::make_tuple(44100, 48000, 16000, 20),
-        std::tr1::make_tuple(44100, 44100, 48000, 20),
-        std::tr1::make_tuple(44100, 44100, 32000, 20),
-        std::tr1::make_tuple(44100, 44100, 16000, 20),
+        std::tr1::make_tuple(44100, 44100, 48000, 15),
+        std::tr1::make_tuple(44100, 44100, 32000, 15),
+        std::tr1::make_tuple(44100, 44100, 16000, 15),
         std::tr1::make_tuple(44100, 32000, 48000, 20),
         std::tr1::make_tuple(44100, 32000, 32000, 20),
         std::tr1::make_tuple(44100, 32000, 16000, 20),
@@ -2360,9 +2361,9 @@ INSTANTIATE_TEST_CASE_P(
         std::tr1::make_tuple(32000, 32000, 48000, 30),
         std::tr1::make_tuple(32000, 32000, 32000, 0),
         std::tr1::make_tuple(32000, 32000, 16000, 30),
-        std::tr1::make_tuple(32000, 16000, 48000, 25),
-        std::tr1::make_tuple(32000, 16000, 32000, 25),
-        std::tr1::make_tuple(32000, 16000, 16000, 25),
+        std::tr1::make_tuple(32000, 16000, 48000, 20),
+        std::tr1::make_tuple(32000, 16000, 32000, 20),
+        std::tr1::make_tuple(32000, 16000, 16000, 20),
 
         std::tr1::make_tuple(16000, 48000, 48000, 25),
         std::tr1::make_tuple(16000, 48000, 32000, 25),
