@@ -25,11 +25,44 @@
   ],
   'targets': [
     {
+      # Temporary target until Chromium's
+      # src/third_party/libjingle/libjingle.gyp is updated to use rtc_base.
+      # TODO(kjellander): Remove when r7140 is rolled into Chromium's DEPS.
       'target_name': 'webrtc_base',
+      'type': 'none',
+      'dependencies': [
+        'rtc_base',
+      ],
+    },
+    {
+      # The subset of rtc_base approved for use outside of libjingle.
+      'target_name': 'rtc_base_approved',
       'type': 'static_library',
+      'sources': [
+        'checks.cc',
+        'checks.h',
+        'exp_filter.cc',
+        'exp_filter.h',
+        'md5.cc',
+        'md5.h',
+        'md5digest.h',
+        'stringencode.cc',
+        'stringencode.h',
+        'stringutils.cc',
+        'stringutils.h',
+        'thread_annotations.h',
+        'timeutils.cc',
+        'timeutils.h',
+      ],
+    },
+    {
+      'target_name': 'rtc_base',
+      'type': 'static_library',
+      'dependencies': [
+        'rtc_base_approved',
+      ],
       'defines': [
         'FEATURE_ENABLE_SSL',
-        'GTEST_RELATIVE_PATH',
         'LOGGING=1',
         'USE_WEBRTC_DEV_BRANCH',
       ],
@@ -66,11 +99,9 @@
         'byteorder.h',
         'callback.h',
         'callback.h.pump',
-        'checks.cc',
-        'checks.h',
+        'constructormagic.h',
         'common.cc',
         'common.h',
-        'constructormagic.h',
         'cpumonitor.cc',
         'cpumonitor.h',
         'crc32.cc',
@@ -85,8 +116,6 @@
         'diskcache_win32.h',
         'event.cc',
         'event.h',
-        'exp_filter.cc',
-        'exp_filter.h',
         'filelock.cc',
         'filelock.h',
         'fileutils.cc',
@@ -145,9 +174,6 @@
         'macwindowpicker.cc',
         'macwindowpicker.h',
         'mathutils.h',
-        'md5.cc',
-        'md5.h',
-        'md5digest.h',
         'messagedigest.cc',
         'messagedigest.h',
         'messagehandler.cc',
@@ -252,10 +278,6 @@
         'stream.cc',
         'stream.h',
         'stringdigest.h',
-        'stringencode.cc',
-        'stringencode.h',
-        'stringutils.cc',
-        'stringutils.h',
         'systeminfo.cc',
         'systeminfo.h',
         'task.cc',
@@ -271,8 +293,6 @@
         'thread_checker.h',
         'thread_checker_impl.cc',
         'thread_checker_impl.h',
-        'timeutils.cc',
-        'timeutils.h',
         'timing.cc',
         'timing.h',
         'transformadapter.cc',
@@ -317,7 +337,7 @@
         '../overrides/webrtc/base/logging.h',
         '../overrides/webrtc/base/win32socketinit.cc',
       ],
-      # TODO(henrike): issue 3307, make webrtc_base build without disabling
+      # TODO(henrike): issue 3307, make rtc_base build without disabling
       # these flags.
       'cflags!': [
         '-Wextra',
@@ -332,7 +352,6 @@
         ],
         'defines': [
           'FEATURE_ENABLE_SSL',
-          'GTEST_RELATIVE_PATH',
         ],
       },
       'include_dirs': [
@@ -502,18 +521,22 @@
             }],
           ],
         }, {
-          'defines': [
-            'SSL_USE_NSS',
-            'HAVE_NSS_SSL_H',
-            'SSL_USE_NSS_RNG',
+          'conditions': [
+            ['use_legacy_ssl_defaults!=1', {
+              'defines': [
+                'SSL_USE_NSS',
+                'HAVE_NSS_SSL_H',
+                'SSL_USE_NSS_RNG',
+              ],
+              'direct_dependent_settings': {
+                'defines': [
+                  'SSL_USE_NSS',
+                  'HAVE_NSS_SSL_H',
+                  'SSL_USE_NSS_RNG',
+                ],
+              },
+            }],
           ],
-          'direct_dependent_settings': {
-            'defines': [
-              'SSL_USE_NSS',
-              'HAVE_NSS_SSL_H',
-              'SSL_USE_NSS_RNG',
-            ],
-          },
         }],
         ['OS == "android"', {
           'defines': [
@@ -531,16 +554,20 @@
             ],
           },
         }, {
-          'defines': [
-            'HAVE_NSS_SSL_H'
-            'SSL_USE_NSS_RNG',
+          'conditions': [
+            ['use_legacy_ssl_defaults!=1', {
+              'defines': [
+                'HAVE_NSS_SSL_H',
+                'SSL_USE_NSS_RNG',
+              ],
+              'direct_dependent_settings': {
+                'defines': [
+                  'HAVE_NSS_SSL_H',
+                  'SSL_USE_NSS_RNG',
+                ],
+              },
+            }],
           ],
-          'direct_dependent_settings': {
-            'defines': [
-              'HAVE_NSS_SSL_H'
-              'SSL_USE_NSS_RNG',
-            ],
-          },
           'sources!': [
             'ifaddrs-android.cc',
             'ifaddrs-android.h',
@@ -589,7 +616,6 @@
         ['OS=="linux"', {
           'link_settings': {
             'libraries': [
-              '-lcrypto',
               '-ldl',
               '-lrt',
             ],

@@ -27,7 +27,6 @@ AcmSendTest::AcmSendTest(InputAudioFile* audio_source,
                          int source_rate_hz,
                          int test_duration_ms)
     : clock_(0),
-      acm_(webrtc::AudioCodingModule::Create(0, &clock_)),
       audio_source_(audio_source),
       source_rate_hz_(source_rate_hz),
       input_block_size_samples_(source_rate_hz_ * kBlockSizeMs / 1000),
@@ -37,25 +36,23 @@ AcmSendTest::AcmSendTest(InputAudioFile* audio_source,
       payload_type_(0),
       timestamp_(0),
       sequence_number_(0) {
+  webrtc::AudioCoding::Config config;
+  config.clock = &clock_;
+  config.transport = this;
+  acm_.reset(webrtc::AudioCoding::Create(config));
   input_frame_.sample_rate_hz_ = source_rate_hz_;
   input_frame_.num_channels_ = 1;
   input_frame_.samples_per_channel_ = input_block_size_samples_;
   assert(input_block_size_samples_ * input_frame_.num_channels_ <=
          AudioFrame::kMaxDataSizeSamples);
-  acm_->RegisterTransportCallback(this);
 }
 
-bool AcmSendTest::RegisterCodec(const char* payload_name,
-                                int sampling_freq_hz,
+bool AcmSendTest::RegisterCodec(int codec_type,
                                 int channels,
                                 int payload_type,
                                 int frame_size_samples) {
-  FATAL_ERROR_IF(AudioCodingModule::Codec(
-                     payload_name, &codec_, sampling_freq_hz, channels) != 0);
-  codec_.pltype = payload_type;
-  codec_.pacsize = frame_size_samples;
-  codec_registered_ = (acm_->RegisterSendCodec(codec_) == 0);
-  assert(channels == 1);  // TODO(henrik.lundin) Add multi-channel support.
+  codec_registered_ =
+      acm_->RegisterSendCodec(codec_type, payload_type, frame_size_samples);
   input_frame_.num_channels_ = channels;
   assert(input_block_size_samples_ * input_frame_.num_channels_ <=
          AudioFrame::kMaxDataSizeSamples);
@@ -73,11 +70,16 @@ Packet* AcmSendTest::NextPacket() {
   // Insert audio and process until one packet is produced.
   while (clock_.TimeInMilliseconds() < test_duration_ms_) {
     clock_.AdvanceTimeMilliseconds(kBlockSizeMs);
-    FATAL_ERROR_IF(
-        !audio_source_->Read(input_block_size_samples_, input_frame_.data_));
-    FATAL_ERROR_IF(acm_->Add10MsData(input_frame_) != 0);
+    CHECK(audio_source_->Read(input_block_size_samples_, input_frame_.data_));
+    if (input_frame_.num_channels_ > 1) {
+      InputAudioFile::DuplicateInterleaved(input_frame_.data_,
+                                           input_block_size_samples_,
+                                           input_frame_.num_channels_,
+                                           input_frame_.data_);
+    }
+    int32_t encoded_bytes = acm_->Add10MsAudio(input_frame_);
+    EXPECT_GE(encoded_bytes, 0);
     input_frame_.timestamp_ += input_block_size_samples_;
-    int32_t encoded_bytes = acm_->Process();
     if (encoded_bytes > 0) {
       // Encoded packet received.
       return CreatePacket();

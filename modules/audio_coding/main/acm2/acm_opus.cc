@@ -28,7 +28,6 @@ ACMOpus::ACMOpus(int16_t /* codec_id */)
       sample_freq_(0),
       bitrate_(0),
       channels_(1),
-      fec_enabled_(false),
       packet_loss_rate_(0) {
   return;
 }
@@ -58,10 +57,6 @@ void ACMOpus::DestructEncoderSafe() {
   return;
 }
 
-void ACMOpus::InternalDestructEncoderInst(void* /* ptr_inst */) {
-  return;
-}
-
 int16_t ACMOpus::SetBitRateSafe(const int32_t /*rate*/) {
   return -1;
 }
@@ -73,7 +68,6 @@ ACMOpus::ACMOpus(int16_t codec_id)
       sample_freq_(32000),  // Default sampling frequency.
       bitrate_(20000),  // Default bit-rate.
       channels_(1),  // Default mono.
-      fec_enabled_(false),  // Default FEC is off.
       packet_loss_rate_(0) {  // Initial packet loss rate.
   codec_id_ = codec_id;
   // Opus has internal DTX, but we dont use it for now.
@@ -179,13 +173,6 @@ void ACMOpus::DestructEncoderSafe() {
   }
 }
 
-void ACMOpus::InternalDestructEncoderInst(void* ptr_inst) {
-  if (ptr_inst != NULL) {
-    WebRtcOpus_EncoderFree(static_cast<OpusEncInst*>(ptr_inst));
-  }
-  return;
-}
-
 int16_t ACMOpus::SetBitRateSafe(const int32_t rate) {
   if (rate < 6000 || rate > 510000) {
     WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceAudioCoding, unique_id_,
@@ -207,15 +194,11 @@ int16_t ACMOpus::SetBitRateSafe(const int32_t rate) {
 int ACMOpus::SetFEC(bool enable_fec) {
   // Ask the encoder to enable FEC.
   if (enable_fec) {
-    if (WebRtcOpus_EnableFec(encoder_inst_ptr_) == 0) {
-      fec_enabled_ = true;
+    if (WebRtcOpus_EnableFec(encoder_inst_ptr_) == 0)
       return 0;
-    }
   } else {
-    if (WebRtcOpus_DisableFec(encoder_inst_ptr_) == 0) {
-      fec_enabled_ = false;
+    if (WebRtcOpus_DisableFec(encoder_inst_ptr_) == 0)
       return 0;
-    }
   }
   return -1;
 }
@@ -263,9 +246,9 @@ int ACMOpus::SetPacketLossRate(int loss_rate) {
   return -1;
 }
 
-int ACMOpus::SetOpusMaxBandwidth(int max_bandwidth) {
-  // Ask the encoder to change the maximum required bandwidth.
-  return WebRtcOpus_SetMaxBandwidth(encoder_inst_ptr_, max_bandwidth);
+int ACMOpus::SetOpusMaxPlaybackRate(int frequency_hz) {
+  // Informs Opus encoder of the maximum playback rate the receiver will render.
+  return WebRtcOpus_SetMaxPlaybackRate(encoder_inst_ptr_, frequency_hz);
 }
 
 #endif  // WEBRTC_CODEC_OPUS

@@ -173,6 +173,17 @@ void WindowCapturerWin::Capture(const DesktopRegion& region) {
     return;
   }
 
+  // Return a 1x1 black frame if the window is minimized, to match the behavior
+  // on Mac.
+  if (IsIconic(window_)) {
+    BasicDesktopFrame* frame = new BasicDesktopFrame(DesktopSize(1, 1));
+    memset(frame->data(), 0, frame->stride() * frame->size().height());
+
+    previous_size_ = frame->size();
+    callback_->OnCaptureCompleted(frame);
+    return;
+  }
+
   DesktopRect original_rect;
   DesktopRect cropped_rect;
   if (!GetCroppedWindowRect(window_, &cropped_rect, &original_rect)) {

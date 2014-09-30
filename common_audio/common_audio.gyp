@@ -184,6 +184,15 @@
             'signal_processing/min_max_operations_neon.S',
             'signal_processing/vector_scaling_operations_neon.S',
           ],
+          'conditions': [
+            # Disable LTO in common_audio_neon target due to compiler bug
+            ['use_lto==1', {
+              'cflags!': [
+                '-flto',
+                '-ffat-lto-objects',
+              ],
+            }],
+          ],
         },
       ],  # targets
     }],
@@ -219,9 +228,7 @@
             'wav_writer_unittest.cc',
           ],
           'conditions': [
-            # TODO(henrike): remove build_with_chromium==1 when the bots are
-            # using Chromium's buildbots.
-            ['build_with_chromium==1 and OS=="android"', {
+            ['OS=="android"', {
               'dependencies': [
                 '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
               ],
@@ -230,9 +237,7 @@
         },
       ],  # targets
       'conditions': [
-        # TODO(henrike): remove build_with_chromium==1 when the bots are using
-        # Chromium's buildbots.
-        ['build_with_chromium==1 and OS=="android"', {
+        ['OS=="android"', {
           'targets': [
             {
               'target_name': 'common_audio_unittests_apk_target',

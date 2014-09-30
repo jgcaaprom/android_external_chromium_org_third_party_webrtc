@@ -33,8 +33,7 @@ class AcmSendTest : public AudioPacketizationCallback, public PacketSource {
   virtual ~AcmSendTest() {}
 
   // Registers the send codec. Returns true on success, false otherwise.
-  bool RegisterCodec(const char* payload_name,
-                     int sampling_freq_hz,
+  bool RegisterCodec(int codec_type,
                      int channels,
                      int payload_type,
                      int frame_size_samples);
@@ -42,7 +41,7 @@ class AcmSendTest : public AudioPacketizationCallback, public PacketSource {
   // Returns the next encoded packet. Returns NULL if the test duration was
   // exceeded. Ownership of the packet is handed over to the caller.
   // Inherited from PacketSource.
-  Packet* NextPacket();
+  virtual Packet* NextPacket() OVERRIDE;
 
   // Inherited from AudioPacketizationCallback.
   virtual int32_t SendData(
@@ -62,12 +61,11 @@ class AcmSendTest : public AudioPacketizationCallback, public PacketSource {
   Packet* CreatePacket();
 
   SimulatedClock clock_;
-  scoped_ptr<AudioCodingModule> acm_;
+  scoped_ptr<AudioCoding> acm_;
   InputAudioFile* audio_source_;
   int source_rate_hz_;
   const int input_block_size_samples_;
   AudioFrame input_frame_;
-  CodecInst codec_;
   bool codec_registered_;
   int test_duration_ms_;
   // The following member variables are set whenever SendData() is called.

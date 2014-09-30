@@ -51,10 +51,6 @@ static __inline int16_t WebRtcSpl_AddSatW16(int16_t a, int16_t b) {
   return (int16_t) s_sum;
 }
 
-/* TODO(kma): find the cause of unittest errors by the next two functions:
- * http://code.google.com/p/webrtc/issues/detail?id=740.
- */
-#if 0
 static __inline int32_t WebRtcSpl_AddSatW32(int32_t l_var1, int32_t l_var2) {
   int32_t l_sum = 0;
 
@@ -70,7 +66,6 @@ static __inline int32_t WebRtcSpl_SubSatW32(int32_t l_var1, int32_t l_var2) {
 
   return l_sub;
 }
-#endif
 
 static __inline int16_t WebRtcSpl_SubSatW16(int16_t var1, int16_t var2) {
   int32_t s_sub = 0;
@@ -88,7 +83,7 @@ static __inline int16_t WebRtcSpl_GetSizeInBits(uint32_t n) {
   return (int16_t)(32 - tmp);
 }
 
-static __inline int WebRtcSpl_NormW32(int32_t a) {
+static __inline int16_t WebRtcSpl_NormW32(int32_t a) {
   int32_t tmp = 0;
 
   if (a == 0) {
@@ -100,20 +95,20 @@ static __inline int WebRtcSpl_NormW32(int32_t a) {
 
   __asm __volatile ("clz %0, %1":"=r"(tmp):"r"(a));
 
-  return tmp - 1;
+  return (int16_t)(tmp - 1);
 }
 
-static __inline int WebRtcSpl_NormU32(uint32_t a) {
+static __inline int16_t WebRtcSpl_NormU32(uint32_t a) {
   int tmp = 0;
 
   if (a == 0) return 0;
 
   __asm __volatile ("clz %0, %1":"=r"(tmp):"r"(a));
 
-  return tmp;
+  return (int16_t)tmp;
 }
 
-static __inline int WebRtcSpl_NormW16(int16_t a) {
+static __inline int16_t WebRtcSpl_NormW16(int16_t a) {
   int32_t tmp = 0;
 
   if (a == 0) {
@@ -125,7 +120,7 @@ static __inline int WebRtcSpl_NormW16(int16_t a) {
 
   __asm __volatile ("clz %0, %1":"=r"(tmp):"r"(a));
 
-  return tmp - 17;
+  return (int16_t)(tmp - 17);
 }
 
 // TODO(kma): add unit test.
