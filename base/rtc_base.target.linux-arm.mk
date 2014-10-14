@@ -52,12 +52,6 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/messagequeue.cc \
 	third_party/webrtc/base/nethelpers.cc \
 	third_party/webrtc/base/network.cc \
-	third_party/webrtc/base/nssidentity.cc \
-	third_party/webrtc/base/nssstreamadapter.cc \
-	third_party/webrtc/base/openssladapter.cc \
-	third_party/webrtc/base/openssldigest.cc \
-	third_party/webrtc/base/opensslidentity.cc \
-	third_party/webrtc/base/opensslstreamadapter.cc \
 	third_party/webrtc/base/pathutils.cc \
 	third_party/webrtc/base/physicalsocketserver.cc \
 	third_party/webrtc/base/proxydetect.cc \
@@ -88,7 +82,11 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/unixfilesystem.cc \
 	third_party/webrtc/base/urlencode.cc \
 	third_party/webrtc/base/worker.cc \
-	third_party/webrtc/overrides/webrtc/base/logging.cc
+	third_party/webrtc/overrides/webrtc/base/logging.cc \
+	third_party/webrtc/base/openssladapter.cc \
+	third_party/webrtc/base/openssldigest.cc \
+	third_party/webrtc/base/opensslidentity.cc \
+	third_party/webrtc/base/opensslstreamadapter.cc
 
 
 # Flags passed to both C and C++ files.
@@ -176,7 +174,6 @@ MY_DEFS_Debug := \
 	'-DLOGGING=1' \
 	'-DUSE_WEBRTC_DEV_BRANCH' \
 	'-DNO_MAIN_THREAD_WRAPPING' \
-	'-DSSL_USE_NSS' \
 	'-DSSL_USE_OPENSSL' \
 	'-DHAVE_OPENSSL_SSL_H' \
 	'-DUSE_OPENSSL=1' \
@@ -306,7 +303,6 @@ MY_DEFS_Release := \
 	'-DLOGGING=1' \
 	'-DUSE_WEBRTC_DEV_BRANCH' \
 	'-DNO_MAIN_THREAD_WRAPPING' \
-	'-DSSL_USE_NSS' \
 	'-DSSL_USE_OPENSSL' \
 	'-DHAVE_OPENSSL_SSL_H' \
 	'-DUSE_OPENSSL=1' \
