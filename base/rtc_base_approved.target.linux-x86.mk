@@ -26,6 +26,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/base/checks.cc \
 	third_party/webrtc/base/exp_filter.cc \
 	third_party/webrtc/base/md5.cc \
+	third_party/webrtc/base/platform_file.cc \
 	third_party/webrtc/base/stringencode.cc \
 	third_party/webrtc/base/stringutils.cc \
 	third_party/webrtc/base/timeutils.cc
