@@ -50,9 +50,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_processing/voice_detection_impl.cc \
 	third_party/webrtc/modules/audio_processing/ns/noise_suppression.c \
 	third_party/webrtc/modules/audio_processing/ns/ns_core.c \
-	third_party/webrtc/modules/audio_processing/aecm/aecm_core_mips.c \
-	third_party/webrtc/modules/audio_processing/aec/aec_core_mips.c \
-	third_party/webrtc/modules/audio_processing/aec/aec_rdft_mips.c
+	third_party/webrtc/modules/audio_processing/aecm/aecm_core_c.c
 
 
 # Flags passed to both C and C++ files.
@@ -68,12 +66,10 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -128,8 +124,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -199,12 +193,10 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -258,8 +250,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \

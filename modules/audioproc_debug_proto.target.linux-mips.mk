@@ -63,12 +63,10 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -123,8 +121,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -188,12 +184,10 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -247,8 +241,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \

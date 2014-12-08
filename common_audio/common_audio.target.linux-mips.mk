@@ -31,6 +31,8 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/resampler/sinc_resampler.cc \
 	third_party/webrtc/common_audio/signal_processing/auto_corr_to_refl_coef.c \
 	third_party/webrtc/common_audio/signal_processing/auto_correlation.c \
+	third_party/webrtc/common_audio/signal_processing/complex_fft.c \
+	third_party/webrtc/common_audio/signal_processing/complex_bit_reverse.c \
 	third_party/webrtc/common_audio/signal_processing/copy_set_operations.c \
 	third_party/webrtc/common_audio/signal_processing/cross_correlation.c \
 	third_party/webrtc/common_audio/signal_processing/division_operations.c \
@@ -38,6 +40,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/signal_processing/downsample_fast.c \
 	third_party/webrtc/common_audio/signal_processing/energy.c \
 	third_party/webrtc/common_audio/signal_processing/filter_ar.c \
+	third_party/webrtc/common_audio/signal_processing/filter_ar_fast_q12.c \
 	third_party/webrtc/common_audio/signal_processing/filter_ma_fast_q12.c \
 	third_party/webrtc/common_audio/signal_processing/get_hanning_window.c \
 	third_party/webrtc/common_audio/signal_processing/get_scaling_square.c \
@@ -55,6 +58,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/signal_processing/resample_fractional.c \
 	third_party/webrtc/common_audio/signal_processing/spl_init.c \
 	third_party/webrtc/common_audio/signal_processing/spl_sqrt.c \
+	third_party/webrtc/common_audio/signal_processing/spl_sqrt_floor.c \
 	third_party/webrtc/common_audio/signal_processing/spl_version.c \
 	third_party/webrtc/common_audio/signal_processing/splitting_filter.c \
 	third_party/webrtc/common_audio/signal_processing/sqrt_of_one_minus_x_squared.c \
@@ -65,15 +69,7 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/common_audio/vad/vad_gmm.c \
 	third_party/webrtc/common_audio/vad/vad_sp.c \
 	third_party/webrtc/common_audio/wav_header.cc \
-	third_party/webrtc/common_audio/wav_writer.cc \
-	third_party/webrtc/common_audio/signal_processing/complex_bit_reverse_mips.c \
-	third_party/webrtc/common_audio/signal_processing/complex_fft_mips.c \
-	third_party/webrtc/common_audio/signal_processing/cross_correlation_mips.c \
-	third_party/webrtc/common_audio/signal_processing/downsample_fast_mips.c \
-	third_party/webrtc/common_audio/signal_processing/filter_ar_fast_q12_mips.c \
-	third_party/webrtc/common_audio/signal_processing/min_max_operations_mips.c \
-	third_party/webrtc/common_audio/signal_processing/resample_by_2_mips.c \
-	third_party/webrtc/common_audio/signal_processing/spl_sqrt_floor_mips.c
+	third_party/webrtc/common_audio/wav_writer.cc
 
 
 # Flags passed to both C and C++ files.
@@ -89,7 +85,6 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -144,8 +139,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -206,7 +199,6 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -260,8 +252,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
