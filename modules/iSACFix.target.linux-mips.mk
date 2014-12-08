@@ -38,21 +38,18 @@ LOCAL_SRC_FILES := \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/initialize.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/isacfix.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_c.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lpc_masking_model.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lpc_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator.c \
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator_c.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_filter.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_filter_c.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_gain_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_lag_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/spectrum_ar_model_tables.c \
 	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_tables.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/entropy_coding_mips.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/filters_mips.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/lattice_mips.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_estimator_mips.c \
-	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_mips.c
+	third_party/webrtc/modules/audio_coding/codecs/isac/fix/source/transform_tables.c
 
 
 # Flags passed to both C and C++ files.
@@ -68,12 +65,10 @@ MY_CFLAGS_Debug := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -128,8 +123,6 @@ MY_DEFS_Debug := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
@@ -193,12 +186,10 @@ MY_CFLAGS_Release := \
 	-pipe \
 	-fPIC \
 	-Wno-unused-local-typedefs \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
 	-fno-builtin-sinf \
-	-mhard-float \
 	-fno-builtin-cos \
 	-fno-builtin-sin \
 	-fno-builtin-cosf \
@@ -252,8 +243,6 @@ MY_DEFS_Release := \
 	'-DWEBRTC_MODULE_UTILITY_VIDEO' \
 	'-DWEBRTC_CHROMIUM_BUILD' \
 	'-DLOGGING_INSIDE_WEBRTC' \
-	'-DMIPS32_LE' \
-	'-DMIPS_FPU_LE' \
 	'-DWEBRTC_POSIX' \
 	'-DWEBRTC_LINUX' \
 	'-DWEBRTC_ANDROID' \
