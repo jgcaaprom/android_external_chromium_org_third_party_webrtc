@@ -69,7 +69,7 @@ MY_CFLAGS_Debug := \
 	-Wno-ignored-qualifiers \
 	-Wno-type-limits \
 	-Wno-unused-but-set-variable \
-	-w -O3 \
+	-w -O2 \
 	-g \
 	-gdwarf-4 \
 	-fdata-sections \
@@ -191,7 +191,7 @@ MY_CFLAGS_Release := \
 	-Wno-ignored-qualifiers \
 	-Wno-type-limits \
 	-Wno-unused-but-set-variable \
-	-w -O3 \
+	-w -O2 \
 	-fno-ident \
 	-fdata-sections \
 	-ffunction-sections \
